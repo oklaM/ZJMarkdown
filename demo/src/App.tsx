@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Markdown } from '../node_modules/zjlab-frontier-markdown';
+import { ZJMarkdown } from '../node_modules/zjlab-frontier-markdown';
 import './App.css'
 
 function App() {
@@ -50,7 +50,7 @@ function hello() {
       <div className="preview-container">
         <h3>预览</h3>
         <div className="markdown-container">
-          <Markdown content={markdown} />
+          <ZJMarkdown content={markdown} />
         </div>
       </div>
     </div>

@@ -353,7 +353,7 @@ function _MarkDownContent(props: { content: string }) {
 
 export const MarkdownContent = React.memo(_MarkDownContent);
 
-export function Markdown(
+export function ZJMarkdown(
   props: {
     content: string;
     loading?: boolean;
@@ -385,4 +385,4 @@ export function Markdown(
 }
 
 // 添加默认导出
-export default Markdown;
+export default ZJMarkdown;
