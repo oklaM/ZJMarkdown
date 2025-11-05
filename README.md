@@ -1,20 +1,20 @@
-# zjlab-frontier-markdown
+# @zjlab-frontier/markdown
 
 一个功能强大的 React Markdown 组件，支持 Mermaid 图表、KaTeX 数学公式、代码高亮等高级特性。
 
 ## 安装
 
 ```bash
-npm install zjlab-frontier-markdown
+npm install @zjlab-frontier/markdown
 # 或
-yarn add zjlab-frontier-markdown
+yarn add @zjlab-frontier/markdown
 ```
 
 ## 使用方法
 
 ```jsx
 import React from 'react';
-import { ZJMarkdown } from 'zjlab-frontier-markdown';
+import { ZJMarkdown } from '@zjlab-frontier/markdown';
 
 function App() {
   const markdownContent = `

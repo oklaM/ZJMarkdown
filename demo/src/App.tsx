@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ZJMarkdown } from '../node_modules/zjlab-frontier-markdown';
+import { ZJMarkdown } from '@zjlab-frontier/markdown';
 import './App.css'
 
 function App() {
