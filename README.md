@@ -15,7 +15,6 @@ yarn add zjlab-frontier-markdown
 ```jsx
 import React from 'react';
 import { ZJMarkdown } from 'zjlab-frontier-markdown';
-import 'zjlab-frontier-markdown/dist/zjlab-frontier-markdown.css';
 
 function App() {
   const markdownContent = `
