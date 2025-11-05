@@ -25,7 +25,7 @@ export default defineConfig({
     lib: {
       entry: path.resolve(__dirname, 'index.ts'),
       name: 'ZjlabFrontierMarkdown',
-      fileName: (format) => `index.${format}.js`,
+      fileName: 'index'
     },
     rollupOptions: {
       external: ['react', 'react-dom'],
@@ -33,9 +33,12 @@ export default defineConfig({
         globals: {
           react: 'React',
           'react-dom': 'ReactDOM'
-        }
+        },
+        exports: 'named'
       }
     },
-    outDir: './dist'
+    outDir: './dist',
+    emptyOutDir: true,
+    sourcemap: false
   }
 });

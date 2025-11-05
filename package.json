@@ -1,18 +1,18 @@
 {
   "name": "zjlab-frontier-markdown",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Markdown component with support for Mermaid, KaTeX, and code highlighting",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
+      "import": "./dist/index.mjs",
       "require": "./dist/index.umd.js"
     },
-    "./dist/zjlab-frontier-markdown.css": {
-      "import": "./dist/zjlab-frontier-markdown.css",
-      "require": "./dist/zjlab-frontier-markdown.css"
+    "./styles": {
+      "import": "./dist/index.css",
+      "require": "./dist/index.css"
     }
   },
   "files": [
