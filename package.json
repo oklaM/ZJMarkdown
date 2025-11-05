@@ -4,6 +4,17 @@
   "description": "Markdown component with support for Mermaid, KaTeX, and code highlighting",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.umd.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./dist/zjlab-frontier-markdown.css": {
+      "import": "./dist/zjlab-frontier-markdown.css",
+      "require": "./dist/zjlab-frontier-markdown.css"
+    }
+  },
   "files": [
     "dist",
     "styles"
