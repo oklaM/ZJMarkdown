@@ -14,9 +14,8 @@ yarn add zjlab-frontier-markdown
 
 ```jsx
 import React from 'react';
-import { Markdown } from 'zjlab-frontier-markdown';
-import 'zjlab-frontier-markdown/dist/styles/markdown.scss';
-import 'zjlab-frontier-markdown/dist/styles/highlight.scss';
+import { ZJMarkdown } from 'zjlab-frontier-markdown';
+import 'zjlab-frontier-markdown/dist/zjlab-frontier-markdown.css';
 
 function App() {
   const markdownContent = `
@@ -50,7 +49,7 @@ $$
 
   return (
     <div className="app">
-      <Markdown 
+      <ZJMarkdown 
         content={markdownContent} 
         fontSize={16}
         fontFamily="Arial, sans-serif"
@@ -74,7 +73,7 @@ export default App;
 - ✅ 自动复制代码按钮
 - ✅ 响应式设计
 
-## Markdown 组件属性
+## ZJMarkdown 组件属性
 
 | 属性 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
