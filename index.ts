@@ -1,2 +1,2 @@
 export * from './markdown';
-export { default } from './markdown';
+export { ZJMarkdown as default } from './markdown';
