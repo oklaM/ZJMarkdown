@@ -14,6 +14,8 @@ import RehypeRaw from "rehype-raw";               // 允许 HTML 在 rehype 阶�
 import "katex/dist/katex.min.css";
 import "./markdown.scss";
 import "./highlight.scss";
+// 测试 Markdown
+import { markdownTestContent } from "./markdownTestContent"
 
 /**
  * 将指定文本复制到剪贴板。
@@ -445,6 +447,10 @@ export function ZJMarkdown(
       <MarkdownContent content={props.content} />
     </div>
   );
+}
+
+export const TestZJMarkdown: any = () => {
+  return (<ZJMarkdown content={ markdownTestContent }></ZJMarkdown>)
 }
 
 // 默认导出主组件
