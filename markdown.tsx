@@ -150,6 +150,11 @@ export function PreCode(props: { children?: any }): any {
     }
   }, []);
 
+  let children: any = props?.children;
+  if (typeof children !== 'string') {
+    children = children?.props?.children || '';
+  }
+
   return (
     <>
       <div style={{ position: "relative" }}>
@@ -179,7 +184,7 @@ export function PreCode(props: { children?: any }): any {
               }
             }}
           ></span>
-          {props.children}
+          {children}
         </pre>
       </div>
       {/* 若检测到 Mermaid 代码，则渲染图表 */}
@@ -449,8 +454,11 @@ export function ZJMarkdown(
   );
 }
 
-export const TestZJMarkdown: any = () => {
-  return (<ZJMarkdown content={ markdownTestContent }></ZJMarkdown>)
+/**
+ * 自带 Markdown 测试内容的组件，方便快速调试和布局。
+ */
+export const TestZJMarkdown: any = (content?: string) => {
+  return (<ZJMarkdown content={ content || markdownTestContent }></ZJMarkdown>)
 }
 
 // 默认导出主组件

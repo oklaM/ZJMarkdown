@@ -46,6 +46,24 @@ function App() {
 
 ---
 
+## 测试组件
+
+用来快速测试、布局、调试的组件，自带全面的 Markdown 测试内容
+
+### 1. 引入组件
+
+```tsx
+import { TestZJMarkdown } from '@zjlab-frontier/markdown';
+```
+
+### 2. 使用
+
+```tsx
+<TestZJMarkdown />
+```
+
+---
+
 ## 🧩 功能详解
 
 ### 1. **GitHub 风格 Markdown（GFM）支持**
