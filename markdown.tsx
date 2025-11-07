@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import clsx from "clsx";
 import mermaid from "mermaid";
-import { useDebouncedCallback } from "use-debounce";
 // 引入用于 Markdown 扩展的插件
 import RehypeHighlight from "rehype-highlight";   // 代码高亮
 import RehypeKatex from "rehype-katex";           // LaTeX 数学公式渲染（KaTeX）
@@ -16,6 +15,13 @@ import "./markdown.scss";
 import "./highlight.scss";
 // 测试 Markdown
 import { markdownTestContent } from "./markdownTestContent"
+
+// 统一初始化 Mermaid，避免重复初始化
+mermaid.initialize({
+  startOnLoad: false,
+  theme: "default",
+  securityLevel: "loose", // 允许内嵌样式
+});
 
 /**
  * 将指定文本复制到剪贴板。
@@ -35,22 +41,25 @@ function copyToClipboard(text: string): void {
  * 接收 Mermaid 代码字符串，通过 mermaid.js 渲染为 SVG 图表。
  * 支持点击图表（预留扩展点，当前注释掉弹窗逻辑）。
  */
-export function Mermaid(props: { code: string }): any {
+export function Mermaid(props: { code: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const [hasError, setHasError] = useState(false);
+  const lastCodeRef = useRef<string>("");
 
-  // 当 code 变化时，触发 mermaid 渲染
   useEffect(() => {
-    if (props.code && ref.current) {
-      mermaid
-        .run({
-          nodes: [ref.current],
-          suppressErrors: true, // 避免控制台报错污染
-        })
-        .catch((e: any) => {
-          setHasError(true);
-          console.error("[Markdown] Mermaid 渲染失败:", e.message);
-        });
+    if (!props.code || !ref.current) return;
+
+    // 避免重复渲染相同内容
+    if (props.code === lastCodeRef.current) return;
+    lastCodeRef.current = props.code;
+
+    try {
+      // 每次运行前清空旧 SVG 内容
+      ref.current.innerHTML = props.code.trim();
+      mermaid.run({ nodes: [ref.current], suppressErrors: true });
+    } catch (e: any) {
+      setHasError(true);
+      console.error("[Markdown] Mermaid 渲染失败:", e.message);
     }
   }, [props.code]);
 
@@ -67,9 +76,7 @@ export function Mermaid(props: { code: string }): any {
   }
 
   // 若渲染失败，不显示任何内容（避免显示原始代码）
-  if (hasError) {
-    return null;
-  }
+  if (hasError) return null;
 
   return (
     <div
@@ -80,9 +87,7 @@ export function Mermaid(props: { code: string }): any {
       }}
       ref={ref}
       onClick={() => viewSvgInNewWindow()}
-    >
-      {props.code}
-    </div>
+    />
   );
 }
 
@@ -95,58 +100,36 @@ export function Mermaid(props: { code: string }): any {
  */
 export function PreCode(props: { children?: any }): any {
   const ref = useRef<HTMLPreElement>(null);
-  const [mermaidCode, setMermaidCode] = useState("");
   const [language, setLanguage] = useState("");
+  const [mermaidCode, setMermaidCode] = useState<string | null>(null);
 
-  // 延迟解析代码块内容，避免过早读取未挂载的 DOM
-  const renderArtifacts = useDebouncedCallback(() => {
-    if (!ref.current) return;
-
-    const codeDom = ref.current.querySelector("code");
-    if (codeDom) {
-      // 从 code 元素的 class 中提取语言（如 language-javascript）
-      const languageClass = codeDom.className.match(/language-(\w+)/);
-      const detectedLanguage = languageClass ? languageClass[1] : "text";
-      setLanguage(detectedLanguage);
-
-      // 若为 Mermaid 代码块，提取内容供 Mermaid 组件使用
-      if (detectedLanguage === "mermaid") {
-        setMermaidCode(codeDom.innerText);
-      }
-    }
-  }, 600);
-
-  // （兼容性处理）尝试在组件挂载前捕获 Mermaid 内容（防止 debounce 延迟导致首次渲染缺失）
-  const mermaidDom = ref.current?.querySelector("code.language-mermaid");
-  if (mermaidDom) {
-    setMermaidCode((mermaidDom as HTMLElement).innerText);
-  }
-
-  // 组件挂载后，对特定语言的代码块启用自动换行（避免横向滚动）
   useEffect(() => {
-    if (ref.current) {
-      const codeElements = ref.current.querySelectorAll(
-        "code"
-      ) as NodeListOf<HTMLElement>;
-      const wrapLanguages = [
-        "",
-        "md",
-        "markdown",
-        "text",
-        "txt",
-        "plaintext",
-        "tex",
-        "latex",
-      ];
-      codeElements.forEach((codeElement) => {
-        const languageClass = codeElement.className.match(/language-(\w+)/);
-        const name = languageClass ? languageClass[1] : "";
-        if (wrapLanguages.includes(name)) {
-          codeElement.style.whiteSpace = "pre-wrap";
-        }
-      });
-      // 短延迟确保 DOM 已更新后再执行解析
-      setTimeout(renderArtifacts, 1);
+    if (!ref.current) return;
+    const codeDom = ref.current.querySelector("code");
+    if (!codeDom) return;
+
+    const match = codeDom.className.match(/language-(\w+)/);
+    const detectedLang = match ? match[1] : "text";
+    setLanguage(detectedLang);
+
+    // 组件挂载后，对特定语言的代码块启用自动换行（避免横向滚动）
+    const wrapLanguages = [
+      "",
+      "md",
+      "markdown",
+      "text",
+      "txt",
+      "plaintext",
+      "tex",
+      "latex",
+    ];
+    if (wrapLanguages.includes(detectedLang)) {
+      codeDom.style.whiteSpace = "pre-wrap";
+    }
+
+    if (detectedLang === "mermaid") {
+      const newCode = codeDom.innerText.trim();
+      setMermaidCode((prev) => (prev === newCode ? prev : newCode)); // 仅在变化时更新
     }
   }, []);
 
@@ -183,9 +166,7 @@ export function PreCode(props: { children?: any }): any {
         </pre>
       </div>
       {/* 若检测到 Mermaid 代码，则渲染图表 */}
-      {mermaidCode.length > 0 && (
-        <Mermaid code={mermaidCode} key={mermaidCode} />
-      )}
+      {mermaidCode && <Mermaid code={mermaidCode} />}
     </>
   );
 }
