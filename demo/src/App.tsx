@@ -1,40 +1,21 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ZJMarkdown } from '@zjlab-frontier/markdown';
 import './App.css'
 
 function App() {
-  const [markdown, setMarkdown] = useState(`# Markdown 组件演示
+  const [markdown, setMarkdown] = useState('');
 
-## 基础功能
-
-这是一个**加粗**文本，这是一个*斜体*文本。
-
-### 列表
-
-- 无序列表项1
-- 无序列表项2
-- 无序列表项3
-
-1. 有序列表项1
-2. 有序列表项2
-3. 有序列表项3
-
-### 代码高亮
-
-\`\`\`javascript
-function hello() {
-  console.log('Hello, world!');
-}
-\`\`\`
-
-### 链接
-[百度](https://www.baidu.com)
-
-### 表格
-| 名称 | 类型 | 说明 |
-| --- | --- | --- |
-| id | string | 唯一标识符 |
-| name | string | 名称 |`);
+  useEffect(() => {
+    // 动态导入 Markdown 文件，使用 ?raw 后缀获取原始内容
+    import('./f6c648b0-8fae-44d7-bcf9-6449b49f1f2c.md?raw')
+      .then((module) => {
+        setMarkdown(module.default);
+      })
+      .catch((error) => {
+        console.error('Failed to load markdown file:', error);
+        setMarkdown('# 加载失败\n\n无法加载 Markdown 文件，请检查文件路径是否正确。');
+      });
+  }, []);
 
   return (
     <div className="container">
