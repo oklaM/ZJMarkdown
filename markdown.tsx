@@ -1,27 +1,21 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import ReactMarkdown from "react-markdown";
-import clsx from "clsx";
-import mermaid from "mermaid";
+import clsx from 'clsx';
+import mermaid from 'mermaid';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import { useDebouncedCallback } from 'use-debounce';
 // 引入用于 Markdown 扩展的插件
-import RehypeHighlight from "rehype-highlight";   // 代码高亮
-import RehypeKatex from "rehype-katex";           // LaTeX 数学公式渲染（KaTeX）
-import RemarkBreaks from "remark-breaks";         // 将单个换行符转换为 <br>
-import RemarkGfm from "remark-gfm";               // 支持 GitHub 风格 Markdown（表格、任务列表等）
-import RemarkMath from "remark-math";             // 支持 LaTeX 数学公式语法（$...$, $$...$$）
-import RehypeRaw from "rehype-raw";               // 允许 HTML 在 rehype 阶段保留（需谨慎使用）
+import RehypeHighlight from 'rehype-highlight'; // 代码高亮
+import RehypeKatex from 'rehype-katex'; // LaTeX 数学公式渲染（KaTeX）
+import RehypeRaw from 'rehype-raw'; // 允许 HTML 在 rehype 阶段保留（需谨慎使用）
+import RemarkBreaks from 'remark-breaks'; // 将单个换行符转换为 <br>
+import RemarkGfm from 'remark-gfm'; // 支持 GitHub 风格 Markdown（表格、任务列表等）
+import RemarkMath from 'remark-math'; // 支持 LaTeX 数学公式语法（$...$, $$...$$）
 // 引入样式文件
-import "katex/dist/katex.min.css";
-import "./markdown.scss";
-import "./highlight.scss";
+import 'katex/dist/katex.min.css';
+import './highlight.scss';
+import './markdown.scss';
 // 测试 Markdown
-import { markdownTestContent } from "./markdownTestContent"
-
-// 统一初始化 Mermaid，避免重复初始化
-mermaid.initialize({
-  startOnLoad: false,
-  theme: "default",
-  securityLevel: "loose", // 允许内嵌样式
-});
+import { markdownTestContent } from './markdownTestContent';
 
 /**
  * 将指定文本复制到剪贴板。
@@ -41,25 +35,22 @@ function copyToClipboard(text: string): void {
  * 接收 Mermaid 代码字符串，通过 mermaid.js 渲染为 SVG 图表。
  * 支持点击图表（预留扩展点，当前注释掉弹窗逻辑）。
  */
-export function Mermaid(props: { code: string }) {
+export function Mermaid(props: { code: string }): any {
   const ref = useRef<HTMLDivElement>(null);
   const [hasError, setHasError] = useState(false);
-  const lastCodeRef = useRef<string>("");
 
+  // 当 code 变化时，触发 mermaid 渲染
   useEffect(() => {
-    if (!props.code || !ref.current) return;
-
-    // 避免重复渲染相同内容
-    if (props.code === lastCodeRef.current) return;
-    lastCodeRef.current = props.code;
-
-    try {
-      // 每次运行前清空旧 SVG 内容
-      ref.current.innerHTML = props.code.trim();
-      mermaid.run({ nodes: [ref.current], suppressErrors: true });
-    } catch (e: any) {
-      setHasError(true);
-      console.error("[Markdown] Mermaid 渲染失败:", e.message);
+    if (props.code && ref.current) {
+      mermaid
+        .run({
+          nodes: [ref.current],
+          suppressErrors: true, // 避免控制台报错污染
+        })
+        .catch((e: any) => {
+          setHasError(true);
+          console.error('[Markdown] Mermaid 渲染失败:', e.message);
+        });
     }
   }, [props.code]);
 
@@ -68,7 +59,7 @@ export function Mermaid(props: { code: string }) {
    * 当前实现被注释，如需启用可取消注释并实现 showImageModal。
    */
   function viewSvgInNewWindow() {
-    const svg = ref.current?.querySelector("svg");
+    const svg = ref.current?.querySelector('svg');
     if (!svg) return;
     // const text = new XMLSerializer().serializeToString(svg);
     // const blob = new Blob([text], { type: 'image/svg+xml' });
@@ -76,18 +67,22 @@ export function Mermaid(props: { code: string }) {
   }
 
   // 若渲染失败，不显示任何内容（避免显示原始代码）
-  if (hasError) return null;
+  if (hasError) {
+    return null;
+  }
 
   return (
     <div
-      className={clsx("no-dark", "mermaid")} // no-dark: 避免深色主题干扰 Mermaid 默认样式
+      className={clsx('no-dark', 'mermaid')} // no-dark: 避免深色主题干扰 Mermaid 默认样式
       style={{
-        cursor: "pointer",
-        overflow: "auto",
+        cursor: 'pointer',
+        overflow: 'auto',
       }}
       ref={ref}
       onClick={() => viewSvgInNewWindow()}
-    />
+    >
+      {props.code}
+    </div>
   );
 }
 
@@ -100,56 +95,78 @@ export function Mermaid(props: { code: string }) {
  */
 export function PreCode(props: { children?: any }): any {
   const ref = useRef<HTMLPreElement>(null);
-  const [language, setLanguage] = useState("");
-  const [mermaidCode, setMermaidCode] = useState<string | null>(null);
+  const [mermaidCode, setMermaidCode] = useState('');
+  const [language, setLanguage] = useState('text');
 
-  useEffect(() => {
+  // 延迟解析代码块内容，避免过早读取未挂载的 DOM
+  const renderArtifacts = useDebouncedCallback(() => {
     if (!ref.current) return;
-    const codeDom = ref.current.querySelector("code");
-    if (!codeDom) return;
 
-    const match = codeDom.className.match(/language-(\w+)/);
-    const detectedLang = match ? match[1] : "text";
-    setLanguage(detectedLang);
+    const codeDom = ref.current.querySelector('code');
+    if (codeDom) {
+      // 从 code 元素的 class 中提取语言（如 language-javascript）
+      const languageClass = codeDom.className.match(/language-(\w+)/);
+      const detectedLanguage = languageClass ? languageClass[1] : 'text';
+      setLanguage(detectedLanguage);
 
-    // 组件挂载后，对特定语言的代码块启用自动换行（避免横向滚动）
-    const wrapLanguages = [
-      "",
-      "md",
-      "markdown",
-      "text",
-      "txt",
-      "plaintext",
-      "tex",
-      "latex",
-    ];
-    if (wrapLanguages.includes(detectedLang)) {
-      codeDom.style.whiteSpace = "pre-wrap";
+      // 若为 Mermaid 代码块，提取内容供 Mermaid 组件使用
+      if (detectedLanguage === 'mermaid') {
+        setMermaidCode(codeDom.innerText);
+      }
     }
+  }, 600);
 
-    if (detectedLang === "mermaid") {
-      const newCode = codeDom.innerText.trim();
-      setMermaidCode((prev) => (prev === newCode ? prev : newCode)); // 仅在变化时更新
-    }
-  }, []);
-
+  // （兼容性处理）尝试在组件挂载前捕获 Mermaid 内容（防止 debounce 延迟导致首次渲染缺失）
+  const mermaidDom = ref.current?.querySelector('code.language-mermaid');
+  if (mermaidDom) {
+    setMermaidCode((mermaidDom as HTMLElement).innerText);
+  }
   let children: any = props?.children;
   if (typeof children !== 'string') {
     children = children?.props?.children || '';
   }
 
+  // 组件挂载后，对特定语言的代码块启用自动换行（避免横向滚动）
+  useEffect(() => {
+    if (ref.current) {
+      const codeElements = ref.current.querySelectorAll(
+        'code',
+      ) as NodeListOf<HTMLElement>;
+      const wrapLanguages = [
+        '',
+        'md',
+        'markdown',
+        'text',
+        'txt',
+        'plaintext',
+        'tex',
+        'latex',
+      ];
+      codeElements.forEach((codeElement) => {
+        const languageClass = codeElement.className.match(/language-(\w+)/);
+        const name = languageClass ? languageClass[1] : '';
+        if (wrapLanguages.includes(name)) {
+          codeElement.style.whiteSpace = 'pre-wrap';
+        }
+      });
+      // 短延迟确保 DOM 已更新后再执行解析
+      setTimeout(renderArtifacts, 1);
+    }
+  }, []);
+
   return (
     <>
-      <div style={{ position: "relative" }}>
+      <div>
         <pre ref={ref}>
           {/* 显示代码语言标签 */}
           {language && (
             <div
               style={{
-                padding: "10px",
-                backgroundColor: "#3f3f3f",
-                fontSize: "12px",
-                color: "#fff",
+                padding: '8px 10px',
+                marginBottom: '8px',
+                backgroundColor: '#3f3f3f',
+                fontSize: '12px',
+                color: '#fff',
                 zIndex: 1,
               }}
             >
@@ -173,7 +190,9 @@ export function PreCode(props: { children?: any }): any {
         </pre>
       </div>
       {/* 若检测到 Mermaid 代码，则渲染图表 */}
-      {mermaidCode && <Mermaid code={mermaidCode} />}
+      {mermaidCode.length > 0 && (
+        <Mermaid code={mermaidCode} key={mermaidCode} />
+      )}
     </>
   );
 }
@@ -208,13 +227,13 @@ function CustomCode(props: { children?: any; className?: string }): any {
     if (showToggle && enableCodeFold && collapsed) {
       return (
         <div
-          className={clsx("show-hide-button", {
+          className={clsx('show-hide-button', {
             collapsed,
             expanded: !collapsed,
           })}
         >
           <button type="button" onClick={toggleCollapsed}>
-            {"查看全部"}
+            {'查看全部'}
           </button>
         </div>
       );
@@ -228,8 +247,8 @@ function CustomCode(props: { children?: any; className?: string }): any {
         className={clsx(props?.className)}
         ref={ref}
         style={{
-          maxHeight: enableCodeFold && collapsed ? "400px" : "none",
-          overflowY: "hidden",
+          maxHeight: enableCodeFold && collapsed ? '400px' : 'none',
+          overflowY: 'hidden',
         }}
       >
         {props.children}
@@ -258,7 +277,7 @@ function escapeBrackets(text: string) {
         return `$${roundBracket}$`; // 行内公式
       }
       return match;
-    }
+    },
   );
 }
 
@@ -310,11 +329,11 @@ function tryWrapHtmlCode(_text: string) {
 
   // 转义符号对象
   const escaping: any = {
-    "<": "&lt;",
-    ">": "&gt;",
-    "/": "&#47;",
-    "=": "&#61;",
-  }
+    '<': '&lt;',
+    '>': '&gt;',
+    '/': '&#47;',
+    '=': '&#61;',
+  };
 
   // 第三步：仅对非代码块部分进行 HTML 转义
   const processedParts = parts.map((part) => {
@@ -322,23 +341,21 @@ function tryWrapHtmlCode(_text: string) {
       return part.text;
     }
     return part.text.replace(/[<>/=]/g, (match: any) => {
-      return (
-        escaping[match] || match
-      );
+      return escaping[match] || match;
     });
   });
 
-  let result = processedParts.join("");
+  let result = processedParts.join('');
 
   // 第四步：还原公式占位符，并修复可能被错误转义的符号
   placeholders.forEach((original, placeholder) => {
     result = result.replace(
       placeholder,
       original
-        .replace("&lt;", "<")
-        .replace("&gt;", ">")
-        .replace("&#47;", "/")
-        .replace("&#61;", "=") // 注意：原代码此处有笔误 "&&#61;"，但保留原样
+        .replace('&lt;', '<')
+        .replace('&gt;', '>')
+        .replace('&#47;', '/')
+        .replace('&#61;', '='), // 注意：原代码此处有笔误 "&&#61;"，但保留原样
     );
   });
   return result;
@@ -353,11 +370,14 @@ function _MarkDownContent(props: { content: string }) {
   const escapedContent = useMemo(() => {
     return tryWrapHtmlCode(escapeBrackets(props.content));
   }, [props.content]);
-
   return (
     <ReactMarkdown
       // Remark 插件（解析阶段）
-      remarkPlugins={[RemarkMath, RemarkGfm, RemarkBreaks]}
+      remarkPlugins={[
+        RemarkMath,
+        RemarkGfm, // TODO 会引起布局过大
+        RemarkBreaks,
+      ]}
       // Rehype 插件（HTML 处理阶段）
       rehypePlugins={[
         RehypeRaw, // 允许 HTML（需确保内容安全！）
@@ -372,11 +392,11 @@ function _MarkDownContent(props: { content: string }) {
       ]}
       // 自定义 HTML 标签渲染
       components={{
-        pre: PreCode,       // 增强代码块容器
-        code: CustomCode,   // 支持折叠的代码内容
+        pre: PreCode, // 增强代码块容器 // TODO 会引起循环渲染
+        code: CustomCode, // 支持折叠的代码内容
         p: (pProps: any) => <p {...pProps} dir="auto" />, // 自动文本方向
         a: (aProps: any) => {
-          const href = aProps.href || "";
+          const href = aProps.href || '';
           // 音频链接自动转为 <audio> 元素
           if (/\.(aac|mp3|opus|wav)$/.test(href)) {
             return (
@@ -395,7 +415,7 @@ function _MarkDownContent(props: { content: string }) {
           }
           // 内部链接（以 /# 开头）在同一窗口打开，其余在新窗口打开
           const isInternal = /^\/#/i.test(href);
-          const target = isInternal ? "_self" : (aProps.target ?? "_blank");
+          const target = isInternal ? '_self' : aProps.target ?? '_blank';
           return <a {...aProps} target={target} />;
         },
       }}
@@ -415,9 +435,9 @@ export const MarkdownContent = React.memo(_MarkDownContent);
 export function ZJMarkdown(
   props: {
     content: string;
-    fontSize?: number;        // 字体大小（默认 16px）
-    fontFamily?: string;      // 字体族
-  } & React.DOMAttributes<HTMLDivElement>
+    fontSize?: number; // 字体大小（默认 16px）
+    fontFamily?: string; // 字体族
+  } & React.DOMAttributes<HTMLDivElement>,
 ) {
   const mdRef = useRef<HTMLDivElement>(null);
   return (
@@ -426,7 +446,7 @@ export function ZJMarkdown(
       className="markdown-body" // 应用 GitHub 风格 Markdown 样式
       style={{
         fontSize: `${props.fontSize ?? 16}px`,
-        fontFamily: props.fontFamily || "inherit",
+        fontFamily: props.fontFamily || 'inherit',
       }}
       onContextMenu={props.onContextMenu}
       onDoubleClickCapture={props.onDoubleClickCapture}
@@ -441,8 +461,8 @@ export function ZJMarkdown(
  * 自带 Markdown 测试内容的组件，方便快速调试和布局。
  */
 export const TestZJMarkdown: any = (content?: string) => {
-  return (<ZJMarkdown content={ content || markdownTestContent }></ZJMarkdown>)
-}
+  return <ZJMarkdown content={content || markdownTestContent}></ZJMarkdown>;
+};
 
 // 默认导出主组件
 export default ZJMarkdown;
