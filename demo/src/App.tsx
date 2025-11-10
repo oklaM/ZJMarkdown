@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { ZJMarkdown } from '@zjlab-frontier/markdown';
+import { ZJMarkdown } from '../../index';
 import './App.css'
 
 function App() {
@@ -20,18 +20,21 @@ function App() {
   return (
     <div className="container">
       <h1>Markdown 组件演示</h1>
-      <div className="editor-container">
-        <textarea 
-          className="editor"
-          value={markdown}
-          onChange={(e) => setMarkdown(e.target.value)}
-          placeholder="输入Markdown内容..."
-        />
-      </div>
-      <div className="preview-container">
-        <h3>预览</h3>
-        <div className="markdown-container">
-          <ZJMarkdown content={markdown} />
+      <div className="editor-preview-wrapper">
+        <div className="editor-container">
+          <h3>编辑</h3>
+          <textarea 
+            className="editor"
+            value={markdown}
+            onChange={(e) => setMarkdown(e.target.value)}
+            placeholder="输入Markdown内容..."
+          />
+        </div>
+        <div className="preview-container">
+          <h3>预览</h3>
+          <div className="markdown-container">
+            <ZJMarkdown content={markdown} />
+          </div>
         </div>
       </div>
     </div>
