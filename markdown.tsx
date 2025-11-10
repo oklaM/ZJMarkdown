@@ -165,7 +165,9 @@ export function PreCode(props: { children?: any }): any {
             onClick={() => {
               if (ref.current) {
                 copyToClipboard(
-                  ref.current.querySelector("code")?.innerText ?? ""
+                  ref.current.querySelector('code')?.innerText ||
+                    ref.current.innerText ||
+                    '',
                 );
               }
             }}
