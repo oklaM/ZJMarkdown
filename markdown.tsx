@@ -476,8 +476,8 @@ export function ZJMarkdown(
 /**
  * 自带 Markdown 测试内容的组件，方便快速调试和布局。
  */
-export const TestZJMarkdown: any = (content?: string) => {
-  return <ZJMarkdown content={content || markdownTestContent}></ZJMarkdown>;
+export const TestZJMarkdown: any = (props: { content?: string }) => {
+  return <ZJMarkdown content={props.content || markdownTestContent}></ZJMarkdown>;
 };
 
 // 默认导出主组件

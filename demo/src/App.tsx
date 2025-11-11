@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { ZJMarkdown } from '../../index';
+import { ZJMarkdown, TestZJMarkdown } from '../../index';
 import './App.css'
 
 function App() {
@@ -35,6 +35,12 @@ function App() {
           <div className="markdown-container">
             <ZJMarkdown content={markdown} />
           </div>
+        </div>
+      </div>
+      <div className="test-container">
+        <h3>测试</h3>
+        <div className="test-markdown-container">
+          <TestZJMarkdown />
         </div>
       </div>
     </div>
