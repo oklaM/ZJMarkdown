@@ -21,6 +21,12 @@ mermaid.initialize({
   startOnLoad: false,
   theme: "default",
   securityLevel: "loose", // 允许内嵌样式
+  logLevel: 3, // 只显示警告和错误
+  deterministicIds: true, // 确保ID的确定性
+  flowchart: {
+    useMaxWidth: true, // 自动适应容器宽度
+    htmlLabels: true // 允许HTML标签
+  }
 });
 
 /**
@@ -45,6 +51,8 @@ export function Mermaid(props: { code: string }): any {
   const ref = useRef<HTMLDivElement>(null);
   const [hasError, setHasError] = useState(false);
   const lastCodeRef = useRef<string>("");
+  // 生成唯一ID，确保每个图表实例独立
+  const chartId = useMemo(() => `mermaid-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, []);
 
   // 当 code 变化时，触发 mermaid 渲染
   useEffect(() => {
@@ -55,14 +63,31 @@ export function Mermaid(props: { code: string }): any {
     lastCodeRef.current = props.code;
 
     try {
-      // 每次运行前清空旧 SVG 内容
-      ref.current.innerHTML = props.code.trim();
-      mermaid.run({ nodes: [ref.current], suppressErrors: true });
+        // 重置错误状态
+        setHasError(false);
+        
+        // 每次运行前彻底清空容器
+        ref.current.innerHTML = '';
+        
+        // 使用mermaid.render()方法独立渲染每个图表
+        // 只传递必需的参数：id和代码
+        mermaid.render(chartId, props.code.trim())
+          .then(({ svg }) => {
+            // 确保组件仍然挂载
+            if (ref.current) {
+              // 将生成的SVG代码插入到容器中
+              ref.current.innerHTML = svg;
+            }
+          })
+          .catch((error: any) => {
+            setHasError(true);
+            console.error("[Markdown] Mermaid 渲染失败:", error.message);
+          });
     } catch (e: any) {
       setHasError(true);
       console.error("[Markdown] Mermaid 渲染失败:", e.message);
     }
-  }, [props.code]);
+  }, [props.code, chartId]);
 
   /**
    * （预留功能）点击图表时在新窗口中查看 SVG。
@@ -76,21 +101,32 @@ export function Mermaid(props: { code: string }): any {
     // showImageModal(URL.createObjectURL(blob));
   }
 
-  // 若渲染失败，不显示任何内容（避免显示原始代码）
-  if (hasError) {
-    return null;
-  }
-
   return (
     <div
-      className={clsx('no-dark', 'mermaid')} // no-dark: 避免深色主题干扰 Mermaid 默认样式
+      className={clsx('no-dark')} // no-dark: 避免深色主题干扰 Mermaid 默认样式
       style={{
         cursor: 'pointer',
         overflow: 'auto',
+        minHeight: '50px', // 确保在渲染前有最小高度，避免布局跳动
+        backgroundColor: hasError ? '#fee' : '#f8f8f8',
+        padding: '10px',
+        border: hasError ? '1px solid #fcc' : 'none',
+        borderRadius: hasError ? '4px' : '0'
       }}
       ref={ref}
       onClick={() => viewSvgInNewWindow()}
-    />
+    >
+      {hasError ? (
+        <div style={{ 
+          textAlign: 'center', 
+          padding: '10px', 
+          color: '#c33',
+          fontSize: '14px'
+        }}>
+          Mermaid 图表渲染失败，请检查代码语法
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -134,12 +170,7 @@ export function PreCode(props: { children?: any }): any {
       const newCode = codeDom.innerText.trim();
       setMermaidCode((prev) => (prev === newCode ? prev : newCode)); // 仅在变化时更新
     }
-  }, []);
-
-  let children: any = props?.children;
-  if (typeof children !== 'string') {
-    children = children?.props?.children || '';
-  }
+  }, [props.children]); // 添加依赖项，确保代码变化时重新检测
 
   return (
     <>
@@ -172,7 +203,7 @@ export function PreCode(props: { children?: any }): any {
               }
             }}
           ></span>
-          {children}
+          { props.children}
         </pre>
       </div>
       {/* 若检测到 Mermaid 代码，则渲染图表 */}
