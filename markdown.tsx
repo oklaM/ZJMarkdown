@@ -264,6 +264,7 @@ function CustomCode(props: { children?: any; className?: string }): any {
         style={{
           maxHeight: enableCodeFold && collapsed ? '400px' : 'none',
           overflowY: 'hidden',
+          width: '100%',
         }}
       >
         {props.children}
