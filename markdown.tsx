@@ -298,93 +298,13 @@ function escapeBrackets(text: string) {
 }
 
 /**
- * 安全过滤 HTML 标签，防止 XSS 攻击。
- * - 转义 <, >, /, = 等危险字符为 HTML 实体
- * - 但保留代码块和 LaTeX 公式中的原始内容（公式需还原实体）
- * - 使用占位符机制确保公式不被破坏
- */
-function tryWrapHtmlCode(_text: string) {
-  // 第一步：提取所有 LaTeX 公式（行内 $...$ 和块级 $$...$$），用占位符替换
-  const formulaRegex = /(\$\$[\s\S]*?\$\$)|(?<!\$)\$(?!\$)[\s\S]*?\$(?!\$)/g;
-  const placeholders = new Map<string, string>();
-  let placeholderIndex = 0;
-
-  let text: any = _text.replace(formulaRegex, (match) => {
-    const placeholder = `__FORMULA_PLACEHOLDER_KATEX_${placeholderIndex++}_CODE__`;
-    placeholders.set(placeholder, match);
-    return placeholder;
-  });
-
-  // 第二步：分割文本为代码块与非代码块部分
-  const codeBlockPattern = /```[\s\S]*?```|`.*?`/g;
-  const parts = [];
-  let lastIndex = 0;
-  let match;
-
-  while ((match = codeBlockPattern.exec(text)) !== null) {
-    if (match.index > lastIndex) {
-      parts.push({
-        text: text.slice(lastIndex, match.index),
-        isCode: false,
-      });
-    }
-    parts.push({
-      text: match[0],
-      isCode: true,
-      // 代码块内容不进行 HTML 转义
-    });
-    lastIndex = codeBlockPattern.lastIndex;
-  }
-
-  if (lastIndex < text.length) {
-    parts.push({
-      text: text.slice(lastIndex),
-      isCode: false,
-    });
-  }
-
-  // 转义符号对象
-  const escaping: any = {
-    '<': '&lt;',
-    '>': '&gt;',
-    '/': '&#47;',
-    '=': '&#61;',
-  };
-
-  // 第三步：仅对非代码块部分进行 HTML 转义
-  const processedParts = parts.map((part) => {
-    if (part.isCode) {
-      return part.text;
-    }
-    return part.text.replace(/[<>/=]/g, (match: any) => {
-      return escaping[match] || match;
-    });
-  });
-
-  let result = processedParts.join('');
-
-  // 第四步：还原公式占位符，并修复可能被错误转义的符号
-  placeholders.forEach((original, placeholder) => {
-    result = result.replace(
-      placeholder,
-      original
-        .replace('&lt;', '<')
-        .replace('&gt;', '>')
-        .replace('&#47;', '/')
-        .replace('&#61;', '='), // 注意：原代码此处有笔误 "&&#61;"，但保留原样
-    );
-  });
-  return result;
-}
-
-/**
  * 内部 Markdown 渲染组件（不直接导出）。
  * 负责预处理内容并配置 ReactMarkdown 插件与自定义组件。
  */
 function _MarkDownContent(props: { content: string }) {
   // 预处理：转义公式 + 过滤危险 HTML
   const escapedContent = useMemo(() => {
-    return tryWrapHtmlCode(escapeBrackets(props.content));
+    return escapeBrackets(props.content);
   }, [props.content]);
   return (
     <ReactMarkdown
