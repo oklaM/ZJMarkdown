@@ -6,8 +6,8 @@ function App() {
   const [markdown, setMarkdown] = useState('');
 
   useEffect(() => {
-    // 动态导入 Markdown 文件，使用 ?raw 后缀获取原始内容
-    import('./f6c648b0-8fae-44d7-bcf9-6449b49f1f2c.md?raw')
+    // 动态导入公式测试 Markdown 文件，使用 ?raw 后缀获取原始内容
+    import('./formulaTest.md?raw')
       .then((module) => {
         setMarkdown(module.default);
       })

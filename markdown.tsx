@@ -275,15 +275,12 @@ function CustomCode(props: { children?: any; className?: string }): any {
   );
 }
 
-/**
- * 转义 LaTeX 公式语法，将旧式 \[...\] 和 \(...\) 转换为 KaTeX 兼容的 $$...$$ 和 $...$。
- * 注意：跳过代码块（行内和块级）中的内容，避免误转义。
- */
 function escapeBrackets(text: string) {
-  const pattern =
+
+  const oldPattern =
     /(```[\s\S]*?```|`.*?`)|\\\[([\s\S]*?[^\\])\\\]|\\\((.*?)\\\)/g;
-  return text.replace(
-    pattern,
+  text =  text.replace(
+    oldPattern,
     (match, codeBlock, squareBracket, roundBracket) => {
       if (codeBlock) {
         return codeBlock; // 保留代码块原样
@@ -295,7 +292,87 @@ function escapeBrackets(text: string) {
       return match;
     },
   );
+  // =============================
+  // 1) 保护所有不应被处理的片段
+  // =============================
+  const protectedBlocks: string[] = [];
+
+  // 按顺序保护：
+  //   代码块、inline code、行间公式、行内公式、\[...\]、各类环境
+  const protectPattern =
+    /```[\s\S]*?```|`[^`]+`|\$\$[\s\S]*?\$\$|\$[^$\n]+?\$|\\\[[\s\S]*?\\\]|\\begin\{[^}]+\}[\s\S]*?\\end\{[^}]+\}/g;
+
+  text = text.replace(protectPattern, (m) => {
+    const id = `__PROTECTED_${protectedBlocks.length}__`;
+    protectedBlocks.push(m);
+    return id;
+  });
+
+  // =============================
+  // 2) 处理 LaTeX 结构（不会影响数学区）
+  // =============================
+
+  // 支持嵌套 {} 的 boxed
+  const balancedBracesPattern = /\\boxed\{((?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*)\}/g;
+  text = text.replace(balancedBracesPattern, "$$\\boxed{$1}$$");
+
+  const pattern =
+    /\\mathbb\{([^}]*)\}|\\mathcal\{([^}]*)\}|\\mathbf\{([^}]*)\}|\\mathit\{([^}]*)\}|\\mathrm\{([^}]*)\}|\\frac\{([^}]*)\}\{([^}]*)\}|\\sqrt\[([^}]*)\]\{([^}]*)\}|\\sqrt\{([^}]*)\}|\\sum_\{([^}]*)\}\^\{([^}]*)\}|\\prod_\{([^}]*)\}\^\{([^}]*)\}|\\int_\{([^}]*)\}\^\{([^}]*)\}|\\lim_\{([^}]*)\}|\\\(([\s\S]*?[^\\])\\\)/g;
+
+  text = text.replace(
+    pattern,
+    (
+      match,
+      mathbb,
+      mathcal,
+      mathbf,
+      mathit,
+      mathrm,
+      fracNum,
+      fracDen,
+      rootIndex,
+      rootArg,
+      sqrtArg,
+      sumSub,
+      sumSup,
+      prodSub,
+      prodSup,
+      intSub,
+      intSup,
+      limSub,
+      roundBracket
+    ) => {
+      if (mathbb) return `$\\mathbb{${mathbb}}$`;
+      if (mathcal) return `$\\mathcal{${mathcal}}$`;
+      if (mathbf) return `$\\mathbf{${mathbf}}$`;
+      if (mathit) return `$\\mathit{${mathit}}$`;
+      if (mathrm) return `$\\mathrm{${mathrm}}$`;
+      if (fracNum && fracDen) return `$\\frac{${fracNum}}{${fracDen}}$`;
+      if (rootIndex && rootArg) return `$\\sqrt[${rootIndex}]{${rootArg}}$`;
+      if (sqrtArg) return `$\\sqrt{${sqrtArg}}$`;
+      if (sumSub && sumSup) return `$\\sum_{${sumSub}}^{${sumSup}}$`;
+      if (prodSub && prodSup) return `$\\prod_{${prodSub}}^{${prodSup}}$`;
+      if (intSub && intSup) return `$\\int_{${intSub}}^{${intSup}}$`;
+      if (limSub) return `$\\lim_{${limSub}}$`;
+      if (roundBracket) return `$${roundBracket}$`;
+      return match;
+    }
+  );
+
+  // =============================
+  // 3) 最后处理 singleDollar （最安全的位置）
+  // =============================
+  const singleDollarPattern = /(\$)([^$\n]+?)(?=\s|$|\.|,|;|:|\?|!|\)|\]|\})/g;
+  text = text.replace(singleDollarPattern, "$$$2$");
+
+  // =============================
+  // 4) 恢复所有保护块
+  // =============================
+  text = text.replace(/__PROTECTED_(\d+)__/g, (_, i) => protectedBlocks[i]);
+
+  return text;
 }
+
 
 /**
  * 内部 Markdown 渲染组件（不直接导出）。
