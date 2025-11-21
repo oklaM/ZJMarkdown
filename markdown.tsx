@@ -276,21 +276,18 @@ function CustomCode(props: { children?: any; className?: string }): any {
 }
 
 function escapeBrackets(text: string) {
-
-  const oldPattern =
-    /(```[\s\S]*?```|`.*?`)|\\\[([\s\S]*?[^\\])\\\]|\\\((.*?)\\\)/g;
-  text =  text.replace(
-    oldPattern,
-    (match, codeBlock, squareBracket, roundBracket) => {
-      if (codeBlock) {
-        return codeBlock; // 保留代码块原样
-      } else if (squareBracket) {
+  // 先预处理 LaTeX 格式的公式，将 \[...\] 和 \(...\) 转换为 $$...$$ 和 $...$
+  const formulaPattern = /\\\[([\s\S]*?[^\\])\\\]|\\\((.*?)\\\)/g;
+  text = text.replace(
+    formulaPattern,
+    (match, squareBracket, roundBracket) => {
+      if (squareBracket) {
         return `$$${squareBracket}$$`; // 块级公式
       } else if (roundBracket) {
         return `$${roundBracket}$`; // 行内公式
       }
       return match;
-    },
+    }
   );
   // =============================
   // 1) 保护所有不应被处理的片段

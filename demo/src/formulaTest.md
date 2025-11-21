@@ -130,3 +130,80 @@ M(\text{epi } h_X | \mathcal{H}) = \text{epi } h_{m(X|\mathcal{H})}, \quad m(\te
 These relationships highlight the complementary roles of the conditional core and convex hull in the theory of random sets, analogous to the interplay between infimum and supremum in classical analysis.
 
 \boxed{M_p(X|\mathcal{H})} \text{ is the smallest } \mathcal{H}\text{-measurable random convex closed set containing } X\text{, with support function } \text{ess sup}_{\mathcal{H}} h_X(\zeta). \text{ Under the assumption that } X \text{ has an } \mathcal{H}\text{-measurable selection, it satisfies } M_p(X - \gamma | \mathcal{H}) = (m((X - \gamma)^{\circ} | \mathcal{H}))^{\circ}\text{ for } \gamma \in S_0(X, \mathcal{H}).}
+
+### 错误的证明
+
+The provided proof that the mass ratio \( \frac{m_1}{m_2} = \frac{r_2}{r_1} \) is incorrect due to a misunderstanding of the center of mass condition and the forces in a binary system. Below is a corrected derivation that properly handles the center of mass and gravitational and centripetal forces.
+
+### Corrected Proof:
+Consider a binary system where two stars, \( m_1 \) and \( m_2 \), orbit around their common center of mass. Let \( r_1 \) and \( r_2 \) be the distances from the center of mass to \( m_1 \) and \( m_2 \), respectively, and let \( d \) be the separation between the stars (\( d = r_1 + r_2 \)).
+
+1. **Center of Mass Condition**:  
+   The center of mass is the point where the system balances. For equilibrium, the gravitational forces must balance the centripetal forces, but the center of mass condition arises from the requirement that the net force on the system is zero. Thus:
+   \[
+   m_1 r_1 = m_2 r_2
+   \]
+   Rearranged, this gives:
+   \[
+   \frac{m_1}{m_2} = \frac{r_2}{r_1}
+   \]
+   This is a general result for any two-body system and does not assume circular motion or equal masses.
+
+2. **Gravitational and Centripetal Forces**:  
+   The gravitational force between the stars provides the centripetal force for their circular motion around the center of mass. The gravitational force is:
+   \[
+   F_g = \frac{G m_1 m_2}{d^2}
+   \]
+   For star 1, the centripetal force is:
+   \[
+   F_{c1} = m_1 \omega^2 r_1
+   \]
+   For star 2, the centripetal force is:
+   \[
+   F_{c2} = m_2 \omega^2 r_2
+   \]
+   where \( \omega \) is the orbital angular velocity.
+
+3. **Equating Forces**:  
+   Since the gravitational force provides the centripetal force for both stars, and considering the center of mass frame:
+   \[
+   F_g = F_{c1} + F_{c2}
+   \]
+   Substituting the expressions:
+   \[
+   \frac{G m_1 m_2}{d^2} = m_1 \omega^2 r_1 + m_2 \omega^2 r_2
+   \]
+   From the center of mass condition (\( m_1 r_1 = m_2 r_2 \)), we can write:
+   \[
+   m_1 \omega^2 r_1 = m_2 \omega^2 r_2
+   \]
+   Therefore:
+   \[
+   F_g = 2 m_2 \omega^2 r_2
+   \]
+   But also:
+   \[
+   F_g = \frac{G m_1 m_2}{d^2}
+   \]
+   Equating these:
+   \[
+   \frac{G m_1 m_2}{d^2} = 2 m_2 \omega^2 r_2
+   \]
+   Dividing both sides by \( m_2 \) (assuming \( m_2 \neq 0 \)):
+   \[
+   \frac{G m_1}{d^2} = 2 \omega^2 r_2
+   \]
+   This equation relates the masses, separation, and orbital parameters but does not directly give the mass ratio. However, from the center of mass condition alone:
+   \[
+   \frac{m_1}{m_2} = \frac{r_2}{r_1}
+   \]
+   is consistent and correct.
+
+4. **Why the Original Proof Was Incorrect**:  
+   The original proof incorrectly assumed that the centripetal forces are equal, which is not true for a binary system with different masses. Specifically:
+   - The centripetal force for star 1 is \( m_1 \omega^2 r_1 \).
+   - The centripetal force for star 2 is \( m_2 \omega^2 r_2 \).
+   - These forces are equal only if \( m_1 r_1 = m_2 r_2 \), which is the center of mass condition, not a force equality. The gravitational force is equal to the sum of the centripetal forces for both stars, not individually to each.
+
+### Conclusion:
+The correct mass ratio is \( \frac{m_1}{m_2} = \frac{r_2}{r_1} \), derived directly from the center of mass condition. The gravitational force provides the centripetal force for the system, but the ratio of the masses is determined solely by the distances from the center of mass. This holds for any binary system, regardless of orbital shape, as long as the center of mass is defined. The centripetal force equation confirms the center of mass condition but does not alter it.
