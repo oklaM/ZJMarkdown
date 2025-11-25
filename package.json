@@ -1,6 +1,6 @@
 {
   "name": "@zjlab-frontier/markdown",
-  "version": "1.0.17",
+  "version": "1.0.18",
   "description": "Markdown component with support for Mermaid, KaTeX, and code highlighting",
   "main": "dist/index.umd.js",
   "types": "dist/index.d.ts",

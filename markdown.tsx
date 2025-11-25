@@ -389,17 +389,27 @@ function _MarkDownContent(props: { content: string }) {
         RemarkBreaks,
       ]}
       // Rehype 插件（HTML 处理阶段）
-      rehypePlugins={[
-        RehypeRaw, // 允许 HTML（需确保内容安全！）
-        RehypeKatex, // 渲染数学公式
-        [
-          RehypeHighlight,
-          {
-            detect: false, // 不自动检测语言（由 highlight.js 依赖 class）
-            ignoreMissing: true, // 忽略未加载的语法高亮
-          },
-        ],
-      ]}
+			rehypePlugins={[
+				RehypeRaw,
+				[
+					RehypeKatex,
+					{
+						strict: false,
+						trust: true,
+						macros: {
+              "\\cdotp": "‧", // 或者直接使用文本
+            },
+            errorColor: "#686868"
+					},
+				],
+				[
+					RehypeHighlight,
+					{
+						detect: false,
+						ignoreMissing: true,
+					},
+				],
+			]}
       // 自定义 HTML 标签渲染
       components={{
         pre: PreCode, // 增强代码块容器 // TODO 会引起循环渲染
