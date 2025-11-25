@@ -10,9 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@zjlab-frontier/markdown": "file:..",
     "react": "^19.1.1",
-    "react-dom": "^19.1.1",
-    "@zjlab-frontier/markdown": "file:.."
+    "react-dom": "^19.1.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",

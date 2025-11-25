@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { ZJMarkdown, TestZJMarkdown } from '../../index';
+// import { ZJMarkdown, TestZJMarkdown } from '../../index';
+import { ZJMarkdown, TestZJMarkdown } from '@zjlab-frontier/markdown';
 import './App.css'
 
 function App() {
