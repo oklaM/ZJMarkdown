@@ -289,6 +289,11 @@ function escapeBrackets(text: string) {
       return match;
     }
   );
+  
+  // 支持嵌套 {} 的 boxed
+  const balancedBracesPattern = /\\boxed\{((?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*)\}/g;
+  text = text.replace(balancedBracesPattern, "$$\\boxed{$1}$$");
+  
   // =============================
   // 1) 保护所有不应被处理的片段
   // =============================
@@ -308,10 +313,6 @@ function escapeBrackets(text: string) {
   // =============================
   // 2) 处理 LaTeX 结构（不会影响数学区）
   // =============================
-
-  // 支持嵌套 {} 的 boxed
-  const balancedBracesPattern = /\\boxed\{((?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*)\}/g;
-  text = text.replace(balancedBracesPattern, "$$\\boxed{$1}$$");
 
   const pattern =
     /\\mathbb\{([^}]*)\}|\\mathcal\{([^}]*)\}|\\mathbf\{([^}]*)\}|\\mathit\{([^}]*)\}|\\mathrm\{([^}]*)\}|\\frac\{([^}]*)\}\{([^}]*)\}|\\sqrt\[([^}]*)\]\{([^}]*)\}|\\sqrt\{([^}]*)\}|\\sum_\{([^}]*)\}\^\{([^}]*)\}|\\prod_\{([^}]*)\}\^\{([^}]*)\}|\\int_\{([^}]*)\}\^\{([^}]*)\}|\\lim_\{([^}]*)\}|\\\(([\s\S]*?[^\\])\\\)/g;
