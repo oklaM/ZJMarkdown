@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 // import { ZJMarkdown, TestZJMarkdown } from '../../index';
 import { ZJMarkdown, TestZJMarkdown } from '@zjlab-frontier/markdown';
+import CoreTest from './CoreTest';
 import './App.css'
 
 function App() {
@@ -42,6 +43,8 @@ function App() {
         <h3>测试</h3>
         <div className="test-markdown-container">
           <TestZJMarkdown />
+          <div style={{ marginTop: 12 }} />
+          <CoreTest />
         </div>
       </div>
     </div>

@@ -1,11 +1,9 @@
 import clsx from 'clsx';
-import mermaid from 'mermaid';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 // 引入用于 Markdown 扩展的插件
 import RehypeHighlight from 'rehype-highlight'; // 代码高亮
 import RehypeKatex from 'rehype-katex'; // LaTeX 数学公式渲染（KaTeX）
-import RehypeRaw from 'rehype-raw'; // 允许 HTML 在 rehype 阶段保留（需谨慎使用）
 import RemarkBreaks from 'remark-breaks'; // 将单个换行符转换为 <br>
 import RemarkGfm from 'remark-gfm'; // 支持 GitHub 风格 Markdown（表格、任务列表等）
 import RemarkMath from 'remark-math'; // 支持 LaTeX 数学公式语法（$...$, $$...$$）
@@ -15,44 +13,32 @@ import './highlight.scss';
 import './markdown.scss';
 // 测试 Markdown
 import { markdownTestContent } from './markdownTestContent';
+// 引入核心库（纯 JS）
+import {
+  initializeMermaid,
+  renderMermaid,
+  copyToClipboard,
+  escapeBrackets,
+  detectLanguage,
+  shouldWrapText,
+  isAudioLink,
+  isVideoLink,
+  isInternalLink,
+  generateChartId,
+} from './markdown-core';
 
-// 统一初始化 Mermaid，避免重复初始化
-mermaid.initialize({
-  startOnLoad: false,
-  theme: "default",
-  securityLevel: "loose", // 允许内嵌样式
-  logLevel: 3, // 只显示警告和错误
-  deterministicIds: true, // 确保ID的确定性
-  flowchart: {
-    useMaxWidth: true, // 自动适应容器宽度
-    htmlLabels: true // 允许HTML标签
-  }
-});
-
-/**
- * 将指定文本复制到剪贴板。
- * 使用现代 Clipboard API，若失败则记录错误（例如在非安全上下文中）。
- * @param text - 要复制的字符串内容。
- */
-function copyToClipboard(text: string): void {
-  try {
-    navigator.clipboard.writeText(text);
-  } catch (err) {
-    console.error('[Markdown] 复制失败:', err);
-  }
-}
+// 初始化 Mermaid（仅在 React adapter 中调用）
+initializeMermaid();
 
 /**
- * Mermaid 图表渲染组件。
+ * Mermaid 图表渲染组件（React Adapter）
  * 接收 Mermaid 代码字符串，通过 mermaid.js 渲染为 SVG 图表。
- * 支持点击图表（预留扩展点，当前注释掉弹窗逻辑）。
  */
 export function Mermaid(props: { code: string }): any {
   const ref = useRef<HTMLDivElement>(null);
   const [hasError, setHasError] = useState(false);
   const lastCodeRef = useRef<string>("");
-  // 生成唯一ID，确保每个图表实例独立
-  const chartId = useMemo(() => `mermaid-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, []);
+  const chartId = useMemo(() => generateChartId(), []);
 
   // 当 code 变化时，触发 mermaid 渲染
   useEffect(() => {
@@ -69,37 +55,23 @@ export function Mermaid(props: { code: string }): any {
         // 每次运行前彻底清空容器
         ref.current.innerHTML = '';
         
-        // 使用mermaid.render()方法独立渲染每个图表
-        // 只传递必需的参数：id和代码
-        mermaid.render(chartId, props.code.trim())
-          .then(({ svg }) => {
+        // 使用 markdown-core 的 renderMermaid 函数
+        renderMermaid(props.code, chartId)
+          .then((svg) => {
             // 确保组件仍然挂载
             if (ref.current) {
               // 将生成的SVG代码插入到容器中
               ref.current.innerHTML = svg;
             }
           })
-          .catch((error: any) => {
+          .catch(() => {
             setHasError(true);
-            console.error("[Markdown] Mermaid 渲染失败:", error.message);
           });
     } catch (e: any) {
       setHasError(true);
       console.error("[Markdown] Mermaid 渲染失败:", e.message);
     }
   }, [props.code, chartId]);
-
-  /**
-   * （预留功能）点击图表时在新窗口中查看 SVG。
-   * 当前实现被注释，如需启用可取消注释并实现 showImageModal。
-   */
-  function viewSvgInNewWindow() {
-    const svg = ref.current?.querySelector('svg');
-    if (!svg) return;
-    // const text = new XMLSerializer().serializeToString(svg);
-    // const blob = new Blob([text], { type: 'image/svg+xml' });
-    // showImageModal(URL.createObjectURL(blob));
-  }
 
   return (
     <div
@@ -114,7 +86,6 @@ export function Mermaid(props: { code: string }): any {
         borderRadius: hasError ? '4px' : '0'
       }}
       ref={ref}
-      onClick={() => viewSvgInNewWindow()}
     >
       {hasError ? (
         <div style={{ 
@@ -147,22 +118,11 @@ export function PreCode(props: { children?: any }): any {
     const codeDom = ref.current.querySelector("code");
     if (!codeDom) return;
 
-    const match = codeDom.className.match(/language-(\w+)/);
-    const detectedLang = match ? match[1] : "text";
+    const detectedLang = detectLanguage(codeDom.className);
     setLanguage(detectedLang);
 
     // 组件挂载后，对特定语言的代码块启用自动换行（避免横向滚动）
-    const wrapLanguages = [
-      "",
-      "md",
-      "markdown",
-      "text",
-      "txt",
-      "plaintext",
-      "tex",
-      "latex",
-    ];
-    if (wrapLanguages.includes(detectedLang)) {
+    if (shouldWrapText(detectedLang)) {
       codeDom.style.whiteSpace = "pre-wrap";
     }
 
@@ -275,100 +235,9 @@ function CustomCode(props: { children?: any; className?: string }): any {
   );
 }
 
-function escapeBrackets(text: string) {
-  // 先预处理 LaTeX 格式的公式，将 \[...\] 和 \(...\) 转换为 $$...$$ 和 $...$
-  const formulaPattern = /\\\[([\s\S]*?[^\\])\\\]|\\\((.*?)\\\)/g;
-  text = text.replace(
-    formulaPattern,
-    (match, squareBracket, roundBracket) => {
-      if (squareBracket) {
-        return `$$${squareBracket}$$`; // 块级公式
-      } else if (roundBracket) {
-        return `$${roundBracket}$`; // 行内公式
-      }
-      return match;
-    }
-  );
-  
-  // 支持嵌套 {} 的 boxed
-  const balancedBracesPattern = /\\boxed\{((?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*)\}/g;
-  text = text.replace(balancedBracesPattern, "$$\\boxed{$1}$$");
-  
-  // =============================
-  // 1) 保护所有不应被处理的片段
-  // =============================
-  const protectedBlocks: string[] = [];
-
-  // 按顺序保护：
-  //   代码块、inline code、行间公式、行内公式、\[...\]、各类环境
-  const protectPattern =
-    /```[\s\S]*?```|`[^`]+`|\$\$[\s\S]*?\$\$|\$[^$\n]+?\$|\\\[[\s\S]*?\\\]|\\begin\{[^}]+\}[\s\S]*?\\end\{[^}]+\}/g;
-
-  text = text.replace(protectPattern, (m) => {
-    const id = `__PROTECTED_${protectedBlocks.length}__`;
-    protectedBlocks.push(m);
-    return id;
-  });
-
-  // =============================
-  // 2) 处理 LaTeX 结构（不会影响数学区）
-  // =============================
-
-  const pattern =
-    /\\mathbb\{([^}]*)\}|\\mathcal\{([^}]*)\}|\\mathbf\{([^}]*)\}|\\mathit\{([^}]*)\}|\\mathrm\{([^}]*)\}|\\frac\{([^}]*)\}\{([^}]*)\}|\\sqrt\[([^}]*)\]\{([^}]*)\}|\\sqrt\{([^}]*)\}|\\sum_\{([^}]*)\}\^\{([^}]*)\}|\\prod_\{([^}]*)\}\^\{([^}]*)\}|\\int_\{([^}]*)\}\^\{([^}]*)\}|\\lim_\{([^}]*)\}|\\\(([\s\S]*?[^\\])\\\)/g;
-
-  text = text.replace(
-    pattern,
-    (
-      match,
-      mathbb,
-      mathcal,
-      mathbf,
-      mathit,
-      mathrm,
-      fracNum,
-      fracDen,
-      rootIndex,
-      rootArg,
-      sqrtArg,
-      sumSub,
-      sumSup,
-      prodSub,
-      prodSup,
-      intSub,
-      intSup,
-      limSub,
-      roundBracket
-    ) => {
-      if (mathbb) return `$\\mathbb{${mathbb}}$`;
-      if (mathcal) return `$\\mathcal{${mathcal}}$`;
-      if (mathbf) return `$\\mathbf{${mathbf}}$`;
-      if (mathit) return `$\\mathit{${mathit}}$`;
-      if (mathrm) return `$\\mathrm{${mathrm}}$`;
-      if (fracNum && fracDen) return `$\\frac{${fracNum}}{${fracDen}}$`;
-      if (rootIndex && rootArg) return `$\\sqrt[${rootIndex}]{${rootArg}}$`;
-      if (sqrtArg) return `$\\sqrt{${sqrtArg}}$`;
-      if (sumSub && sumSup) return `$\\sum_{${sumSub}}^{${sumSup}}$`;
-      if (prodSub && prodSup) return `$\\prod_{${prodSub}}^{${prodSup}}$`;
-      if (intSub && intSup) return `$\\int_{${intSub}}^{${intSup}}$`;
-      if (limSub) return `$\\lim_{${limSub}}$`;
-      if (roundBracket) return `$${roundBracket}$`;
-      return match;
-    }
-  );
-
-  // =============================
-  // 3) 最后处理 singleDollar （最安全的位置）
-  // =============================
-  const singleDollarPattern = /(\$)([^$\n]+?)(?=\s|$|\.|,|;|:|\?|!|\)|\]|\})/g;
-  text = text.replace(singleDollarPattern, "$$$2$");
-
-  // =============================
-  // 4) 恢复所有保护块
-  // =============================
-  text = text.replace(/__PROTECTED_(\d+)__/g, (_, i) => protectedBlocks[i]);
-
-  return text;
+function escapeBracketsWrapper(text: string) {
+  // 使用从 markdown-core 导出的函数
+  return escapeBrackets(text);
 }
 
 
@@ -379,7 +248,7 @@ function escapeBrackets(text: string) {
 function _MarkDownContent(props: { content: string }) {
   // 预处理：转义公式 + 过滤危险 HTML
   const escapedContent = useMemo(() => {
-    return escapeBrackets(props.content);
+    return escapeBracketsWrapper(props.content);
   }, [props.content]);
   return (
     <ReactMarkdown
@@ -391,7 +260,6 @@ function _MarkDownContent(props: { content: string }) {
       ]}
       // Rehype 插件（HTML 处理阶段）
 			rehypePlugins={[
-				RehypeRaw,
 				[
 					RehypeKatex,
 					{
@@ -419,7 +287,7 @@ function _MarkDownContent(props: { content: string }) {
         a: (aProps: any) => {
           const href = aProps.href || '';
           // 音频链接自动转为 <audio> 元素
-          if (/\.(aac|mp3|opus|wav)$/.test(href)) {
+          if (isAudioLink(href)) {
             return (
               <figure>
                 <audio controls src={href}></audio>
@@ -427,7 +295,7 @@ function _MarkDownContent(props: { content: string }) {
             );
           }
           // 视频链接自动转为 <video> 元素
-          if (/\.(3gp|3g2|webm|ogv|mpeg|mp4|avi)$/.test(href)) {
+          if (isVideoLink(href)) {
             return (
               <video controls width="99.9%">
                 <source src={href} />
@@ -435,8 +303,7 @@ function _MarkDownContent(props: { content: string }) {
             );
           }
           // 内部链接（以 /# 开头）在同一窗口打开，其余在新窗口打开
-          const isInternal = /^\/#/i.test(href);
-          const target = isInternal ? '_self' : aProps.target ?? '_blank';
+          const target = isInternalLink(href) ? '_self' : aProps.target ?? '_blank';
           return <a {...aProps} target={target} />;
         },
       }}
@@ -458,6 +325,7 @@ export function ZJMarkdown(
     content: string;
     fontSize?: number; // 字体大小（默认 16px）
     fontFamily?: string; // 字体族
+    style?: React.CSSProperties;
   } & React.DOMAttributes<HTMLDivElement>,
 ) {
   const mdRef = useRef<HTMLDivElement>(null);
@@ -468,6 +336,7 @@ export function ZJMarkdown(
       style={{
         fontSize: `${props.fontSize ?? 16}px`,
         fontFamily: props.fontFamily || 'inherit',
+        ...props.style,
       }}
       onContextMenu={props.onContextMenu}
       onDoubleClickCapture={props.onDoubleClickCapture}

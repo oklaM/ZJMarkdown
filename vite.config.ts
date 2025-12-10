@@ -16,6 +16,7 @@ export default defineConfig({
       fileName: (format) => `index.${format}.js`,
     },
     rollupOptions: {
+      // React 被列为 external，防止重复打包
       external: ['react', 'react-dom'],
       output: {
         globals: {
