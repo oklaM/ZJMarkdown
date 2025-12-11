@@ -17,7 +17,7 @@ export default defineConfig({
     },
     rollupOptions: {
       // React 被列为 external，防止重复打包
-      external: ['react', 'react-dom'],
+      external: ['react', 'react-dom', 'react/jsx-runtime'],
       output: {
         globals: {
           react: 'React',
