@@ -294,3 +294,94 @@ $$
 原本已经是单美元的公式（如果有被正则保护捕获）：
 $ e^{i\\pi} + 1 = 0 $
 
+
+
+The distance modulus formula is \(m - M = 5 \lg(d/\text{pc}) - 5\), where \(m\) is the apparent magnitude, \(M\) is the absolute magnitude, and \(d\) is the distance in parsecs. The logarithm used is base 10, denoted as \(\lg\).
+
+For the first star:  
+- Apparent magnitude, \(m_1 = 6.0\)  
+- Distance, \(d_1 = 10\) pc  
+- Absolute magnitude, \(M_1\) is to be determined.  
+
+Using the distance modulus formula:  
+\[m_1 - M_1 = 5 \lg(d_1/\text{pc}) - 5\]  
+Substitute the known values:  
+\[6.0 - M_1 = 5 \lg(10) - 5\]  
+Since \(\lg(10) = 1\):  
+\[6.0 - M_1 = 5 \times 1 - 5\]  
+\[6.0 - M_1 = 0\]  
+Thus, \(M_1 = 6.0\).  
+
+The absolute magnitude of the first star is \(M_1 = 6.0\).  
+
+For the second star:  
+- Absolute magnitude, \(M_2 = M_1 = 6.0\) (same as the first star)  
+- Distance, \(d_2 = 100\) pc  
+- Apparent magnitude, \(m_2\), is to be found.  
+
+Using the distance modulus formula:  
+\[m_2 - M_2 = 5 \lg(d_2/\text{pc}) - 5\]  
+Substitute the known values:  
+\[m_2 - 6.0 = 5 \lg(100) - 5\]  
+Since \(\lg(100) = \lg(10^2) = 2 \times \lg(10) = 2 \times 1 = 2\):  
+\[m_2 - 6.0 = 5 \times 2 - 5\]  
+\[m_2 - 6.0 = 10 - 5\]  
+\[m_2 - 6.0 = 5\]  
+Thus, \(m_2 = 6.0 + 5 = 11.0\). 
+
+The apparent magnitude of the second star is 11.0.
+
+\boxed{11.0}
+
+
+The absolute magnitudes are given as \(M_A = 1.0\) and \(M_B = 6.0\). The luminosity ratio \(L_A / L_B\) can be found using the magnitude difference and the given hint.
+
+The magnitude difference is:
+\[
+\Delta m = M_B - M_A = 6.0 - 1.0 = 5.0
+\]
+
+The hint states that a difference of 5 magnitudes corresponds to a luminosity ratio of 100, meaning:
+\[
+100 = 10^{0.4 \Delta m}
+\]
+For \(\Delta m = 5\):
+\[
+10^{0.4 \times 5} = 10^2 = 100
+\]
+Thus, the luminosity ratio is:
+\[
+\frac{L_A}{L_B} = 10^{0.4 \Delta m}
+\]
+Substituting \(\Delta m = 5\):
+\[
+\frac{L_A}{L_B} = 10^{0.4 \times 5} = 10^2 = 100
+\]
+
+Alternatively, using the formula from the hint:
+\[
+m_2 - m_1 = -2.5 \lg\left(\frac{L_2}{L_1}\right)
+\]
+Set \(m_1 = M_A = 1.0\), \(m_2 = M_B = 6.0\), and \(L_2 / L_1 = L_B / L_A\):
+\[
+6.0 - 1.0 = -2.5 \lg\left(\frac{L_B}{L_A}\right)
+\]
+\[
+5.0 = -2.5 \lg\left(\frac{L_B}{L_A}\right)
+\]
+Solving for \(\lg\left(\frac{L_B}{L_A}\right)\):
+\[
+\lg\left(\frac{L_B}{L_A}\right) = \frac{5.0}{-2.5} = -2.0
+\]
+Then:
+\[
+\frac{L_B}{L_A} = 10^{-2.0} = 0.01
+\]
+Thus:
+\[
+\frac{L_A}{L_B} = \frac{1}{0.01} = 100
+\]
+
+Both methods confirm that the luminosity ratio \(L_A / L_B = 100\).
+
+\boxed{100}

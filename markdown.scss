@@ -1173,3 +1173,7 @@ mjx-math mjx-merror {
   padding: 2px 4px;
   border-radius: 4px;
 }
+
+mjx-container[display="true"] + br {
+  display: none !important;
+}
