@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 // import { ZJMarkdown, TestZJMarkdown } from '../../index';
-import { ZJMarkdown, TestZJMarkdown } from '@zjlab-frontier/markdown';
-import CoreTest from './CoreTest';
+import { ZJMarkdown } from '@zjlab-frontier/markdown';
 import './App.css'
+import { markdownTestContent } from './markdownTestContent';
 
 function App() {
   const [markdown, setMarkdown] = useState('');
@@ -39,12 +39,10 @@ function App() {
           </div>
         </div>
       </div>
-      <div className="test-container">
-        <h3>测试</h3>
-        <div className="test-markdown-container">
-          <TestZJMarkdown />
-          <div style={{ marginTop: 12 }} />
-          <CoreTest />
+      <div className="markdown-test-container">
+        <h3>Markdown 测试</h3>
+        <div className="markdown-test-content">
+          <ZJMarkdown content={markdownTestContent} />
         </div>
       </div>
     </div>

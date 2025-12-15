@@ -207,3 +207,90 @@ Consider a binary system where two stars, \( m_1 \) and \( m_2 \), orbit around 
 
 ### Conclusion:
 The correct mass ratio is \( \frac{m_1}{m_2} = \frac{r_2}{r_1} \), derived directly from the center of mass condition. The gravitational force provides the centripetal force for the system, but the ratio of the masses is determined solely by the distances from the center of mass. This holds for any binary system, regardless of orbital shape, as long as the center of mass is defined. The centripetal force equation confirms the center of mass condition but does not alter it.
+
+
+这是一个非常全面的 Markdown 测试用例。它覆盖了你的代码中所有的正则逻辑路径，包括预处理、保护机制、环境处理、特定命令转化以及最后的单美元符号兜底。
+
+
+# LaTeX 公式转换全量测试
+
+## 1. 基础括号预处理 (Preprocess)
+这里测试 `\[` and `\(` 的转换：
+块级公式：\[ E = mc^2 \]
+行内公式：\( a^2 + b^2 = c^2 \)
+
+## 2. 块级环境 (Environments)
+这里测试 align, gather, matrix 是否被正确包裹在 `$$` 中：
+
+Align 环境：
+\begin{align}
+a &= b + c \\
+  &= d + e
+\end{align}
+
+Gather 环境：
+\begin{gather}
+a = b \\
+c = d
+\end{gather}
+
+Matrix 环境 (重点测试：是否补全了 begin/end)：
+\begin{matrix}
+1 & 0 \\
+0 & 1
+\end{matrix}
+
+## 3. Boxed 处理 (支持嵌套)
+普通 Boxed：\boxed{F=ma}
+嵌套 Boxed：\boxed{\frac{1}{2}}
+
+## 4. 化学公式 (\ce)
+水分子：\ce{H2O}
+复杂反应：\ce{SO4^2- + Ba^2+ -> BaSO4 v}
+
+## 5. 字体与文本命令
+Mathbb: \mathbb{R}
+Mathcal: \mathcal{L}
+Mathbf: \mathbf{v}
+Mathit: \mathit{x}
+Mathrm: \mathrm{d}x
+Text: \text{Check constraint}
+
+## 6. 数学结构与运算
+分数：\frac{a}{b}
+开平方：\sqrt{x}
+开多次方：\sqrt[3]{y}
+求和：\sum_{i=1}^{n}^{n}
+乘积：\prod_{i=1}^{n}^{n}
+积分：\int_{0}^{\infty}^{100}
+极限：\lim_{x \rightarrow 0}
+
+## 7. 符号与间距
+箭头测试：\rightarrow \leftarrow \Rightarrow \Leftarrow
+间距测试：x \quad y \qquad z
+
+## 8. 单美元符号兜底 (Single Dollar)
+这是一段包含单美元符号的文本：$a=b$ 以及 $x+y=z$。
+(注意：根据你的逻辑，这些会被转化为 $$...$$ 格式)
+
+## 9. 保护机制测试 (Protection)
+**以下内容不应该被改变：**
+
+代码块中的 LaTeX：
+```latex
+\begin{align}
+  Raw Code
+\end{align}
+````
+
+行内代码中的 LaTeX：`\frac{1}{2}`
+
+原本已经是双美元的公式：
+
+$$
+x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
+$$
+
+原本已经是单美元的公式（如果有被正则保护捕获）：
+$ e^{i\\pi} + 1 = 0 $
+

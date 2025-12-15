@@ -66,8 +66,6 @@
 .markdown-body {
   -ms-text-size-adjust: 100%;
   -webkit-text-size-adjust: 100%;
-  -moz-text-size-adjust: 100%;
-  text-size-adjust: 100%;
   margin: 0;
   color: var(--color-fg-default);
   background-color: var(--color-canvas-default);
@@ -804,7 +802,7 @@
 
 .markdown-body .highlight pre,
 .markdown-body pre {
-  padding: 12px 12px 10px 12px;
+  padding: 16px 16px 8px 16px;
   overflow: auto;
   font-size: 85%;
   line-height: 1.45;
@@ -845,6 +843,11 @@
 .markdown-body .csv-data tr {
   border-top: 0;
 }
+
+.markdown-body .katex{
+font-family: 'KaTeX_Main', 'Times New Roman', serif !important;
+}
+
 
 .markdown-body .csv-data th {
   font-weight: var(--base-text-weight-semibold, 600);
@@ -1107,26 +1110,22 @@ pre {
   }
 
   .copy-code-button {
-    box-sizing: border-box;
     position: absolute;
-    right: 1em;
+    right: 10px;
     top: 1em;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     cursor: pointer;
-    padding: 1px 8px;
+    padding: 0px 5px;
     background-color: var(--black);
     color: var(--white);
     border: var(--border-in-light);
     border-radius: 10px;
-    opacity: 0;
+    transform: translateX(10px);
     pointer-events: none;
-    transition: all ease 0.2s;
+    opacity: 0;
+    transition: all ease 0.3s;
 
     &:after {
       content: "copy";
-      font-size: 14px;
     }
 
     &:hover {
@@ -1166,4 +1165,11 @@ pre {
   .collapsed {
     background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.06));
   }
+}
+
+mjx-math mjx-merror {
+  color: #333;
+  background-color: #f5f5f5;
+  padding: 2px 4px;
+  border-radius: 4px;
 }
