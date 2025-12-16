@@ -2,17 +2,16 @@ import clsx from "clsx";
 import mermaid from "mermaid";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import RemarkBreaks from 'remark-breaks' // 将单个换行符转换为 <br>
-import RemarkGfm from 'remark-gfm' // 支持 GitHub 风格 Markdown（表格、任务列表等）
+import RemarkBreaks from "remark-breaks"; // 将单个换行符转换为 <br>
+import RemarkGfm from "remark-gfm"; // 支持 GitHub 风格 Markdown（表格、任务列表等）
 import {
   MathJax,
   MathJaxContext,
   MathJaxContextProps,
 } from "better-react-mathjax";
-import 'katex/dist/katex.min.css'
-import './highlight.scss'
-import './markdown.scss'
-
+import "katex/dist/katex.min.css";
+import "./highlight.scss";
+import "./markdown.scss";
 
 // 统一初始化 Mermaid，避免重复初始化
 mermaid.initialize({
@@ -283,7 +282,14 @@ function CustomCode(props: { children?: any; className?: string }): any {
 // 1. MathJax 配置
 // ==========================================
 const mathJaxConfig: MathJaxContextProps["config"] = {
-  loader: { load: ["[tex]/mhchem", "[tex]/color", "[tex]/noerrors", "[tex]/noundefined"] },
+  loader: {
+    load: [
+      "[tex]/mhchem",
+      "[tex]/color",
+      "[tex]/noerrors",
+      "[tex]/noundefined",
+    ],
+  },
   tex: {
     packages: { "[+]": ["mhchem", "color", "noerrors", "noundefined"] },
     inlineMath: [
@@ -302,17 +308,17 @@ const mathJaxConfig: MathJaxContextProps["config"] = {
       multiLine: true, // 允许跨行错误
       style: {
         "font-family": "monospace", // 出错时用等宽字体显示原文
-        "color": "#333",            // 颜色设为深灰（默认是红色，太刺眼）
+        color: "#333", // 颜色设为深灰（默认是红色，太刺眼）
         "background-color": "#f5f5f5",
-        "padding": "2px 4px",
-        "border-radius": "4px"
-      }
+        padding: "2px 4px",
+        "border-radius": "4px",
+      },
     },
     // noundefined: 处理未定义的命令（如 \blabla）
     noundefined: {
-      color: "#333",      // 颜色设为深灰
+      color: "#333", // 颜色设为深灰
       background: "#f5f5f5",
-      family: "monospace" // 字体
+      family: "monospace", // 字体
     },
   },
   options: {
@@ -438,12 +444,12 @@ const MathMarkdownViewer: React.FC<Props> = ({ content }) => {
 
   return (
     <MathJaxContext config={mathJaxConfig} version={3}>
-      <MathJax>
+      <MathJax key={processedContent.length}>
         <ReactMarkdown
-              remarkPlugins={[
-        RemarkGfm, // TODO 会引起布局过大
-        RemarkBreaks,
-      ]}
+          remarkPlugins={[
+            RemarkGfm, // TODO 会引起布局过大
+            RemarkBreaks,
+          ]}
           components={{
             pre: PreCode, // 增强代码块容器 // TODO 会引起循环渲染
             code: CustomCode, // 支持折叠的代码内容
