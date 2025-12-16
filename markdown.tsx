@@ -4,14 +4,15 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import RemarkBreaks from "remark-breaks"; // 将单个换行符转换为 <br>
 import RemarkGfm from "remark-gfm"; // 支持 GitHub 风格 Markdown（表格、任务列表等）
+import RehypeHighlight from "rehype-highlight";
 import {
   MathJax,
   MathJaxContext,
   MathJaxContextProps,
 } from "better-react-mathjax";
 import "katex/dist/katex.min.css";
-import "./highlight.scss";
 import "./markdown.scss";
+import "./highlight.scss";
 
 // 统一初始化 Mermaid，避免重复初始化
 mermaid.initialize({
@@ -453,6 +454,15 @@ const MathMarkdownViewer: React.FC<Props> = ({ content }) => {
           remarkPlugins={[
             RemarkGfm, // TODO 会引起布局过大
             RemarkBreaks,
+          ]}
+          rehypePlugins={[
+            [
+              RehypeHighlight,
+              {
+                detect: false,
+                ignoreMissing: true,
+              },
+            ],
           ]}
           components={{
             pre: PreCode, // 增强代码块容器 // TODO 会引起循环渲染
