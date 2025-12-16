@@ -328,7 +328,7 @@ const mathJaxConfig: MathJaxContextProps["config"] = {
 };
 
 // ==========================================
-// 2. 核心：字符串预处理函数
+// 2. 核心：字符串预处理函数 (反斜杠加倍版)
 // ==========================================
 const preprocessLaTeX = (text: string) => {
   const protectedBlocks: string[] = [];
@@ -339,94 +339,98 @@ const preprocessLaTeX = (text: string) => {
     return id;
   };
 
-  // 辅助：转义反斜杠
-  // 将 \ 变成 \\，将 \\ 变成 \\\\
-  // 这样经过 ReactMarkdown 后，MathJax 还能读到正确的 LaTeX 命令
-  const escapeBackslashes = (str: string) => {
-    return str.replace(/\\/g, "\\\\");
+  /**
+   * 核心修复逻辑：
+   * 1. 转义反斜杠 \ -> \\ (让 Markdown 输出 \)
+   * 2. 转义星号 * -> \* (防止 Markdown 变斜体)
+   */
+  const escapeMath = (str: string) => {
+    return str
+      .replace(/\\/g, "\\\\")      // 保护反斜杠
+      .replace(/\*/g, "\\*");      // 仅保护星号，不要动下划线
   };
 
   // ---------------------------------------------------------
-  // 🟢 第一步：绝对保护 (代码块 & 已有公式)
+  // 🟢 第一步：绝对保护 (代码块)
   // ---------------------------------------------------------
-
-  // 1. 保护 Markdown 代码块 (不转义，原样保护)
   text = text.replace(/(`{1,3})([\s\S]*?)\1/g, (m) => pushProtect(m));
 
-  // 2. 保护标准公式 ($...$, $$...$$)
-  // 🔴 修复点：这里也需要转义，否则 $$ a \\ b $$ 里的换行也会丢
-  text = text.replace(/\$\$[\s\S]*?\$\$|\$[^$\n]+?\$/g, (m) => {
-    return pushProtect(escapeBackslashes(m));
+  // ---------------------------------------------------------
+  // 🔴 第二步：处理 LaTeX 公式
+  // ---------------------------------------------------------
+
+  // 1. 处理 $$ (Block)
+  // $$ 不是 Markdown 特殊符号，所以这里单斜杠转义即可 (JS字符串里写两个)
+  text = text.replace(/\$\$([\s\S]*?)\$\$(?:[ \t]*\r?\n){0,2}/g, (match, content) => {
+    const cleanContent = content.replace(/\r?\n/g, " "); // 抹平换行
+    return pushProtect(`$$${escapeMath(cleanContent)}$$`);
   });
 
-  // 3. 保护旧版公式 \[...\] 和 \(...\)
-  text = text.replace(/\\\[([\s\S]*?)\\\]|\\\(([\s\S]*?)\\\)/g, (m) => {
-    return pushProtect(escapeBackslashes(m));
+  // 2. 处理 $ (Inline)
+  text = text.replace(/\$([^$\n]+?)\$/g, (match, content) => {
+    return pushProtect(`$${escapeMath(content)}$`);
+  });
+
+  // 3. 处理 \[ (Block) ——【关键修复点】
+  // \[ 是 Markdown 转义符，必须给它双倍反斜杠 \\\[
+  // 在 JS 字符串里，\\\[ 要写成 "\\\\["
+  text = text.replace(/\\\[([\s\S]*?)\\\](?:[ \t]*\r?\n){0,2}/g, (match, content) => {
+    const cleanContent = content.replace(/\r?\n/g, " "); // 抹平换行
+    // 🔴 改动在这里：使用 \\\\[ 和 \\\\]
+    return pushProtect(`\\\\[${escapeMath(cleanContent)}\\\\]`);
+  });
+
+  // 4. 处理 \( (Inline) ——【关键修复点】
+  // \( 也是 Markdown 转义符，同样需要双倍反斜杠
+  text = text.replace(/\\\(([\s\S]*?)\\\)/g, (match, content) => {
+    // 🔴 改动在这里：使用 \\\\( 和 \\\\)
+    return pushProtect(`\\\\(${escapeMath(content)}\\\\)`);
   });
 
   // ---------------------------------------------------------
-  // 🟡 第二步：处理“裸写”的大型环境 (如 align)
+  // 🟡 第三步：处理 Environment (如 align)
   // ---------------------------------------------------------
   const envPattern =
-    /\\begin\{(align|gather|matrix|cases|split|aligned)\}([\s\S]*?)\\end\{\1\}/g;
+    /\\begin\{(align|gather|matrix|cases|split|aligned)\}([\s\S]*?)\\end\{\1\}(?:[ \t]*\r?\n){0,2}/g;
   text = text.replace(envPattern, (match) => {
-    // 🔴 修复点：对 match 进行转义。
-    // \begin -> \\begin
-    // \\ (换行) -> \\\\
-    const escapedMatch = escapeBackslashes(match);
-    return pushProtect(`$$\n${escapedMatch}\n$$`);
+    const cleanMatch = match.replace(/\r?\n/g, " ");
+    return pushProtect(escapeMath(cleanMatch));
   });
 
   // ---------------------------------------------------------
-  // 🔵 第三步：处理“裸写”的行内/块级命令
+  // 🔵 第四步：兜底处理 (裸写命令)
   // ---------------------------------------------------------
   const BRACES = `\\{(?:[^{}]|\\{(?:[^{}]|\\{[^{}]*\\})*\\})*\\}`;
+  const simpleEscape = (s: string) => s.replace(/\\/g, "\\\\");
 
-  // 1. 化学公式 \ce{...}, 盒子 \boxed{...}
+  // 化学/盒子
   text = text.replace(new RegExp(`\\\\(ce|boxed)${BRACES}`, "g"), (match) => {
-    return pushProtect(`$${escapeBackslashes(match)}$`);
+    return pushProtect(`$${simpleEscape(match)}$`);
   });
-
-  // 2. 复杂运算符 \sum, \int (贪婪匹配)
+  // 巨算符
   const opRegex =
     /\\(sum|prod|int|lim)(?:_\{[^}]*\}|\^\{[^}]*\}|_[a-zA-Z0-9]|\^[a-zA-Z0-9]|[ \t])*/g;
   text = text.replace(opRegex, (match) => {
-    return pushProtect(`$${escapeBackslashes(match.trim())}$`);
+    return pushProtect(`$${simpleEscape(match.trim())}$`);
   });
-
-  // 3. 常见命令 \frac, \sqrt, \text 等
+  // 常用命令
   const cmdPattern = new RegExp(
     `\\\\(frac|sqrt|text|mathbb|mathcal|mathbf|mathit|mathrm|textcolor|color)(?:\\[[^\\]]*\\])?(?:${BRACES})*`,
     "g"
   );
   text = text.replace(cmdPattern, (match) => {
-    return pushProtect(`$${escapeBackslashes(match)}$`);
+    return pushProtect(`$${simpleEscape(match)}$`);
   });
-
-  // 4. 独立符号
-  const symbolPattern =
-    /\\(rightarrow|leftarrow|Rightarrow|Leftarrow|quad|qquad)\b/g;
-  text = text.replace(symbolPattern, (match) => {
-    return pushProtect(`$${escapeBackslashes(match)}$`);
+  // 符号
+  text = text.replace(/\\(rightarrow|leftarrow|Rightarrow|Leftarrow|quad|qquad)\b/g, (match) => {
+    return pushProtect(`$${simpleEscape(match)}$`);
   });
 
   // ---------------------------------------------------------
-  // 🏁 第四步：还原
+  // 🏁 第五步：还原
   // ---------------------------------------------------------
-
   text = text.replace(/__PROTECTED_(\d+)__/g, (_, i) => {
-    let original = protectedBlocks[parseInt(i)];
-
-    // 我们已经在前面做过 escapeBackslashes 了，所以这里的 \[ 变成了 \\[
-    // ReactMarkdown 会把它变成 \[，正好符合 MathJax 要求。
-    // 唯一需要注意的是，如果原始字符串是 `\[`，经过 escapeBackslashes 变成了 `\\[`
-    // ReactMarkdown 渲染后是 `\[`。
-
-    // 但为了保险起见，我们可以利用之前的逻辑检查一下定界符
-    // 但实际上，上面的 escapeBackslashes 已经覆盖了 99% 的情况。
-    // 如果发现 \[ 没有渲染，可以在这里手动再次加固，但通常不需要了。
-
-    return original;
+    return protectedBlocks[parseInt(i)];
   });
 
   return text;

@@ -385,3 +385,31 @@ Thus:
 Both methods confirm that the luminosity ratio \(L_A / L_B = 100\).
 
 \boxed{100}
+
+The Stefan-Boltzmann law states that the luminosity \(L\) of a star is given by \(L = 4\pi R^2 \sigma T^4\), where \(R\) is the radius, \(T\) is the surface temperature, and \(\sigma\) is the Stefan-Boltzmann constant.
+
+For the star and the Sun, the luminosities and temperatures are given relative to the Sun. Let \(L_\odot\) and \(T_\odot\) be the luminosity and surface temperature of the Sun, respectively. The star has \(L_* = 100 L_\odot\) and \(T_* = 2 T_\odot\).
+
+The ratio of the luminosities is:
+\[
+\frac{L_*}{L_\odot} = \frac{4\pi R_*^2 \sigma T_*^4}{4\pi R_\odot^2 \sigma T_\odot^4} = \left( \frac{R_*}{R_\odot} \right)^2 \left( \frac{T_*}{T_\odot} \right)^4
+\]
+
+Substitute the given values:
+\[
+100 = \left( \frac{R_*}{R_\odot} \right)^2 \left( 2 \right)^4 = \left( \frac{R_*}{R_\odot} \right)^2 \cdot 16
+\]
+
+Solve for the radius ratio:
+\[
+\left( \frac{R_*}{R_\odot} \right)^2 = \frac{100}{16} = \frac{25}{4}
+\]
+
+Take the square root of both sides:
+\[
+\frac{R_*}{R_\odot} = \sqrt{\frac{25}{4}} = \frac{5}{2}
+\]
+
+Thus, the ratio of the radius of the star to the Sun's radius is \(\frac{5}{2}\).
+
+\boxed{\dfrac{5}{2}}
