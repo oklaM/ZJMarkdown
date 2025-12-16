@@ -524,7 +524,7 @@ export function ZJMarkdown(
       dir="auto"
       className="markdown-body" // 应用 GitHub 风格 Markdown 样式
       style={{
-        fontSize: `${props.fontSize ?? 15}px`,
+        fontSize: `${props.fontSize ?? 16}px`,
         fontFamily: props.fontFamily || "inherit",
         ...props.style,
       }}
