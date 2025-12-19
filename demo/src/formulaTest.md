@@ -413,3 +413,193 @@ Take the square root of both sides:
 Thus, the ratio of the radius of the star to the Sun's radius is \(\frac{5}{2}\).
 
 \boxed{\dfrac{5}{2}}
+
+
+Alright, let’s go step by step.  
+
+---
+
+**Step 1: Understand the problem**  
+The Sun’s total mass: \( M_{\text{total}} = 2 \times 10^{30} \, \text{kg} \)  
+Only **10%** of this mass is converted to energy via fusion over the Sun’s lifetime.  
+Mass-energy conversion efficiency: **0.7%** of that 10% mass is actually converted to energy.  
+Sun’s lifetime: \( T = 10 \, \text{billion years} = 10 \times 10^9 \, \text{years} \)  
+We use \( E = mc^2 \) to find total energy produced, then divide by time to get luminosity.
+
+---
+
+**Step 2: Mass converted to energy**  
+Mass available for fusion:  
+\[
+M_{\text{available}} = 0.10 \times M_{\text{total}} = 0.10 \times 2 \times 10^{30} = 2 \times 10^{29} \, \text{kg}
+\]  
+Efficiency \( \eta = 0.007 \) (0.7% of that mass is converted to energy).  
+Mass actually converted:  
+\[
+M_{\text{converted}} = \eta \times M_{\text{available}} = 0.007 \times 2 \times 10^{29} = 1.4 \times 10^{27} \, \text{kg}
+\]
+
+---
+
+**Step 3: Total energy produced over Sun’s lifetime**  
+\[
+E_{\text{total}} = M_{\text{converted}} \times c^2
+\]  
+\[
+c = 3 \times 10^8 \, \text{m/s}
+\]  
+\[
+c^2 = 9 \times 10^{16} \, \text{m}^2/\text{s}^2
+\]  
+\[
+E_{\text{total}} = (1.4 \times 10^{27}) \times (9 \times 10^{16}) = 1.26 \times 10^{44} \, \text{J}
+\]
+
+---
+
+**Step 4: Sun’s lifetime in seconds**  
+\[
+T = 10 \times 10^9 \, \text{years} = 10^{10} \, \text{years}
+\]  
+Seconds per year: \( 365.25 \times 24 \times 3600 \approx 3.15576 \times 10^7 \, \text{s} \)  
+\[
+T = 10^{10} \times 3.15576 \times 10^7 \approx 3.15576 \times 10^{17} \, \text{s}
+\]
+
+---
+
+**Step 5: Luminosity**  
+\[
+L = \frac{E_{\text{total}}}{T} = \frac{1.26 \times 10^{44}}{3.15576 \times 10^{17}}
+\]  
+\[
+L \approx 3.99 \times 10^{26} \, \text{W}
+\]
+
+---
+
+**Step 6: Compare with actual solar luminosity**  
+Actual solar luminosity is about \( 3.828 \times 10^{26} \, \text{W} \), so our calculation is close, which makes sense given the approximations.
+
+---
+
+ANSWER: \( 3.99 \times 10^{26} \, \text{W} \)
+
+Alright, let’s go step-by-step.  
+
+---
+
+**Step 1: Understand the given data**  
+Absolute magnitude \( M \) is related to luminosity \( L \) by:  
+
+\[
+M_2 - M_1 = -2.5 \log_{10}\left( \frac{L_2}{L_1} \right)
+\]  
+
+Here:  
+Star A: \( M_A = 1.0 \)  
+Star B: \( M_B = 6.0 \)  
+
+---
+
+**Step 2: Compute magnitude difference**  
+\[
+M_B - M_A = 6.0 - 1.0 = 5.0
+\]  
+
+---
+
+**Step 3: Apply the formula**  
+\[
+5.0 = -2.5 \log_{10}\left( \frac{L_B}{L_A} \right)
+\]  
+
+---
+
+**Step 4: Solve for \( L_B / L_A \)**  
+Divide both sides by \(-2.5\):  
+\[
+\log_{10}\left( \frac{L_B}{L_A} \right) = \frac{5.0}{-2.5} = -2
+\]  
+
+So:  
+\[
+\frac{L_B}{L_A} = 10^{-2} = 0.01
+\]  
+
+---
+
+**Step 5: Interpret**  
+\( L_B / L_A = 0.01 \) means \( L_A \) is 100 times more luminous than \( L_B \).  
+
+Thus:  
+\[
+\frac{L_A}{L_B} = \frac{1}{0.01} = 100
+\]  
+
+---
+
+**Step 6: Check with the hint**  
+Hint says: difference of 5 magnitudes → luminosity ratio of 100.  
+Since \( M_B \) is fainter (larger magnitude), \( L_A / L_B = 100 \) indeed.  
+
+---
+
+ANSWER: 100
+
+
+Alright, let’s go step by step.  
+
+**Step 1: Understand the given information**  
+First star:  
+- Apparent magnitude \( m_1 = 6.0 \)  
+- Distance \( d_1 = 10 \ \text{pc} \)  
+- Absolute magnitude \( M_1 = M \) (unknown)  
+
+Second star:  
+- Absolute magnitude \( M_2 = M_1 = M \) (same as first star)  
+- Distance \( d_2 = 100 \ \text{pc} \)  
+- Apparent magnitude \( m_2 = ? \)  
+
+**Step 2: Find \( M \) from the first star using distance modulus formula**  
+The formula is:  
+\[
+m - M = 5\log_{10}(d/\text{pc}) - 5
+\]  
+For the first star:  
+\[
+6.0 - M = 5\log_{10}(10) - 5
+\]  
+\[
+6.0 - M = 5 \times 1 - 5
+\]  
+\[
+6.0 - M = 0
+\]  
+\[
+M = 6.0
+\]  
+
+**Step 3: Apply the same \( M \) to the second star**  
+For the second star:  
+\[
+m_2 - M = 5\log_{10}(100) - 5
+\]  
+\[
+m_2 - 6.0 = 5 \times 2 - 5
+\]  
+\[
+m_2 - 6.0 = 10 - 5
+\]  
+\[
+m_2 - 6.0 = 5
+\]  
+\[
+m_2 = 11.0
+\]  
+
+**Step 4: Interpret the result**  
+The second star is farther away (100 pc vs. 10 pc), so it appears fainter.  
+The magnitude difference is \( 5 \log_{10}(100/10) = 5 \) magnitudes, so \( m_2 = 6.0 + 5 = 11.0 \), matching our calculation.  
+
+ANSWER: 11.0

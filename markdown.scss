@@ -70,7 +70,7 @@
   color: var(--color-fg-default);
   background-color: var(--color-canvas-default);
   font-size: 14px;
-  line-height: 1.6;
+  line-height: 1.8;
   word-wrap: break-word;
 }
 
@@ -131,6 +131,7 @@
 .markdown-body b,
 .markdown-body strong {
   font-weight: var(--base-text-weight-semibold, 600);
+  font-family: 'NotoSans-Bold', sans-serif;
 }
 
 .markdown-body dfn {
@@ -196,7 +197,7 @@
   border-bottom: 1px solid var(--color-border-muted);
   height: 0.25em;
   padding: 0;
-  margin: 24px 0;
+  margin: 32px 0;
   background-color: var(--color-border-default);
   border: 0;
 }
@@ -486,8 +487,7 @@
 .markdown-body table,
 .markdown-body pre,
 .markdown-body details {
-  margin-top: 0;
-  margin-bottom: 16px;
+  margin: 16px 0;
 }
 
 .markdown-body blockquote > :first-child {
@@ -1165,6 +1165,10 @@ pre {
   .collapsed {
     background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.06));
   }
+}
+
+.markdown-body .katex-display {
+  padding: 4px;
 }
 
 mjx-math mjx-merror {
