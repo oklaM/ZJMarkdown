@@ -361,8 +361,7 @@ const preprocessLaTeX = (text: string) => {
   });
 
   // =========================================================
-  // 🔴 修复点 1：处理 \[ (Block)
-  // 去掉了末尾的 (?:[ \t]*\r?\n){0,2}
+  // 4：处理 \[ (Block)
   // =========================================================
   text = text.replace(/\\\[([\s\S]*?)\\\]/g, (match, content) => {
     const cleanContent = content.replace(/\r?\n/g, " "); 
@@ -370,14 +369,13 @@ const preprocessLaTeX = (text: string) => {
     return pushProtect(`\\\\[${escapeMath(cleanContent)}\\\\]`);
   });
 
-  // 4. \( Inline (保持不变)
+  // 5. \( Inline (保持不变)
   text = text.replace(/\\\(([\s\S]*?)\\\)/g, (match, content) => {
     return pushProtect(`\\\\(${escapeMath(content)}\\\\)`);
   });
 
   // =========================================================
-  // 🟡 修复点 2：处理 Environment (如 align)
-  // 去掉了末尾的 (?:[ \t]*\r?\n){0,2}
+  // 6：处理 Environment (如 align)
   // =========================================================
   const envPattern = /\\begin\{(align|gather|matrix|cases|split|aligned)\}([\s\S]*?)\\end\{\1\}/g;
   text = text.replace(envPattern, (match) => {
@@ -387,23 +385,24 @@ const preprocessLaTeX = (text: string) => {
     return pushProtect(escapeMath(match)); 
   });
 
-  // ... 后续逻辑保持不变 (兜底处理 & 还原) ...
-  
-  // (这里为了节省篇幅省略了后续代码，与你原代码一致)
+  // 7. 处理 \ce (化学方程式) 和 \boxed (边框)
   const BRACES = `\\{(?:[^{}]|\\{(?:[^{}]|\\{[^{}]*\\})*\\})*\\}`;
   const simpleEscape = (s: string) => s.replace(/\\/g, "\\\\");
 
   text = text.replace(new RegExp(`\\\\(ce|boxed)${BRACES}`, "g"), (match) => pushProtect(`$${simpleEscape(match)}$`));
   
+  // 8. 处理常见数学运算符命令
   const opRegex = /\\(sum|prod|int|lim)(?:_\{[^}]*\}|\^\{[^}]*\}|_[a-zA-Z0-9]|\^[a-zA-Z0-9]|[ \t])*/g;
   text = text.replace(opRegex, (match) => pushProtect(`$${simpleEscape(match.trim())}$`));
 
+  // 9. 处理其他常见命令
   const cmdPattern = new RegExp(
     `\\\\(frac|sqrt|text|mathbb|mathcal|mathbf|mathit|mathrm|textcolor|color)(?:\\[[^\\]]*\\])?(?:${BRACES})*`,
     "g"
   );
   text = text.replace(cmdPattern, (match) => pushProtect(`$${simpleEscape(match)}$`));
 
+  // 10. 处理箭头和间距命令
   text = text.replace(/\\(rightarrow|leftarrow|Rightarrow|Leftarrow|quad|qquad)\b/g, (match) => pushProtect(`$${simpleEscape(match)}$`));
 
   // 还原

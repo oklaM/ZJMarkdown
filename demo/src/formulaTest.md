@@ -603,3 +603,26 @@ The second star is farther away (100 pc vs. 10 pc), so it appears fainter.
 The magnitude difference is \( 5 \log_{10}(100/10) = 5 \) magnitudes, so \( m_2 = 6.0 + 5 = 11.0 \), matching our calculation.  
 
 ANSWER: 11.0
+
+
+The spectral energy density per unit wavelength for a blackbody is given by:
+
+\[ u_\lambda = \frac{8\pi h c}{\lambda^5} \frac{1}{e^{h c / (\lambda k T)} - 1} \]
+
+To find the maximum value of \( u_\lambda \) with respect to wavelength \( \lambda \), introduce the substitution \( y = \frac{h c}{\lambda k T} \). Then:
+
+\[ u_\lambda = \frac{8\pi (kT)^5}{h^4 c^4} \frac{y^5}{e^y - 1} \]
+
+The function \( h(y) = \frac{y^5}{e^y - 1} \) has a maximum at a specific value of \( y \), denoted \( y_{\text{max}} \), which is a constant determined by solving \( \frac{d}{dy} \left( \frac{y^5}{e^y - 1} \right) = 0 \). This equation simplifies to \( (5 - y) e^y = 5 \), which has a numerical solution \( y_{\text{max}} \approx 4.965 \), but the key point is that \( y_{\text{max}} \) is independent of temperature \( T \).
+
+Thus, at the maximum:
+
+\[ u_\lambda^{\text{max}} = \frac{8\pi (kT)^5}{h^4 c^4} h(y_{\text{max}}) \]
+
+Since \( h(y_{\text{max}}) \) is a constant, it follows that:
+
+\[ u_\lambda^{\text{max}} \propto (kT)^5 \propto T^5 \]
+
+Therefore, the maximum value of the spectral energy density per unit wavelength is proportional to the fifth power of the equilibrium temperature \( T \).
+
+\boxed{u_{\lambda,\text{max}} \propto T^{5}}
