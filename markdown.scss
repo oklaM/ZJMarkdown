@@ -1168,6 +1168,11 @@ pre {
   }
 }
 
+
+.markdown-body .katex-display {
+  padding: 4px;
+}
+
 mjx-math mjx-merror {
   color: #333;
   background-color: #f5f5f5;

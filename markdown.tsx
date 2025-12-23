@@ -5,12 +5,15 @@ import ReactMarkdown from "react-markdown";
 import RemarkBreaks from "remark-breaks"; // 将单个换行符转换为 <br>
 import RemarkGfm from "remark-gfm"; // 支持 GitHub 风格 Markdown（表格、任务列表等）
 import RehypeHighlight from "rehype-highlight";
-import {
-  MathJax,
-  MathJaxContext,
-  MathJaxContextProps,
-} from "better-react-mathjax";
+import remarkMath from "remark-math";
+import RehypeKatex from "rehype-katex"
+import { remarkBareLatex } from './remark-bare-latex';
+import { processLatexBrackets } from "./utils"
+// @ts-ignore rehype-mathjax is not typed
+import rehypeMathjax from "rehype-mathjax";
 import "katex/dist/katex.min.css";
+import "katex/dist/contrib/copy-tex";
+import "katex/dist/contrib/mhchem";
 import "./markdown.scss";
 import "./highlight.scss";
 
@@ -280,200 +283,88 @@ function CustomCode(props: { children?: any; className?: string }): any {
 }
 
 // ==========================================
-// 1. MathJax 配置
-// ==========================================
-const mathJaxConfig: MathJaxContextProps["config"] = {
-  loader: {
-    load: [
-      "[tex]/mhchem",
-      "[tex]/color",
-      "[tex]/noerrors",
-      "[tex]/noundefined",
-    ],
-  },
-  tex: {
-    packages: { "[+]": ["mhchem", "color", "noerrors", "noundefined"] },
-    inlineMath: [
-      ["$", "$"],
-      ["\\(", "\\)"],
-    ],
-    displayMath: [
-      ["$$", "$$"],
-      ["\\[", "\\]"],
-    ],
-    processEnvironments: true,
-    // 3. 配置出错时的表现
-    // noerrors: 处理语法错误（如括号不匹配）
-    noerrors: {
-      disabled: false, // 启用
-      multiLine: true, // 允许跨行错误
-      style: {
-        "font-family": "monospace", // 出错时用等宽字体显示原文
-        color: "#333", // 颜色设为深灰（默认是红色，太刺眼）
-        "background-color": "#f5f5f5",
-        padding: "2px 4px",
-        "border-radius": "4px",
-      },
-    },
-    // noundefined: 处理未定义的命令（如 \blabla）
-    noundefined: {
-      color: "#333", // 颜色设为深灰
-      background: "#f5f5f5",
-      family: "monospace", // 字体
-    },
-  },
-  options: {
-    skipHtmlTags: ["script", "noscript", "style", "textarea", "pre", "code"],
-  },
-  startup: { typeset: false },
-};
-
-// ==========================================
-// 2. 核心：字符串预处理函数 (反斜杠加倍版)
-// ==========================================
-const preprocessLaTeX = (text: string) => {
-  const protectedBlocks: string[] = [];
-
-  const pushProtect = (content: string) => {
-    const id = `__PROTECTED_${protectedBlocks.length}__`;
-    protectedBlocks.push(content);
-    return id;
-  };
-
-  const escapeMath = (str: string) => {
-    return str
-      .replace(/\\/g, "\\\\")
-      .replace(/\*/g, "\\*");
-  };
-
-  // 1. 代码块保护 (保持不变)
-  text = text.replace(/(`{1,3})([\s\S]*?)\1/g, (m) => pushProtect(m));
-
-  // 2. $$ Block (保持不变)
-  text = text.replace(/\$\$([\s\S]*?)\$\$/g, (match, content) => {
-    const cleanContent = content.replace(/\r?\n/g, " ");
-    return pushProtect(`$$${escapeMath(cleanContent)}$$`);
-  });
-
-  // 3. $ Inline (保持不变)
-  text = text.replace(/\$([^$\n]+?)\$/g, (match, content) => {
-    return pushProtect(`$${escapeMath(content)}$`);
-  });
-
-  // =========================================================
-  // 4：处理 \[ (Block)
-  // =========================================================
-  text = text.replace(/\\\[([\s\S]*?)\\\]/g, (match, content) => {
-    const cleanContent = content.replace(/\r?\n/g, " "); 
-    // 注意：这里我们只处理内容的换行，不吞噬外部的换行
-    return pushProtect(`\\\\[${escapeMath(cleanContent)}\\\\]`);
-  });
-
-  // 5. \( Inline (保持不变)
-  text = text.replace(/\\\(([\s\S]*?)\\\)/g, (match, content) => {
-    return pushProtect(`\\\\(${escapeMath(content)}\\\\)`);
-  });
-
-  // =========================================================
-  // 6：处理 Environment (如 align)
-  // =========================================================
-  const envPattern = /\\begin\{(align|gather|matrix|cases|split|aligned)\}([\s\S]*?)\\end\{\1\}/g;
-  text = text.replace(envPattern, (match) => {
-    // 这里其实不建议无脑抹平换行，因为 align 环境里换行符 \\ 是有意义的
-    // 但为了配合你的 escapeMath 逻辑，暂时保持原样，只是不去掉外部换行
-    // 如果 align 内部原本有物理换行，MathJax 通常能容忍，或者你可以只用 escapeMath
-    return pushProtect(escapeMath(match)); 
-  });
-
-  // 7. 处理 \ce (化学方程式) 和 \boxed (边框)
-  const BRACES = `\\{(?:[^{}]|\\{(?:[^{}]|\\{[^{}]*\\})*\\})*\\}`;
-  const simpleEscape = (s: string) => s.replace(/\\/g, "\\\\");
-
-  text = text.replace(new RegExp(`\\\\(ce|boxed)${BRACES}`, "g"), (match) => pushProtect(`$${simpleEscape(match)}$`));
-  
-  // 8. 处理常见数学运算符命令
-  const opRegex = /\\(sum|prod|int|lim)(?:_\{[^}]*\}|\^\{[^}]*\}|_[a-zA-Z0-9]|\^[a-zA-Z0-9]|[ \t])*/g;
-  text = text.replace(opRegex, (match) => pushProtect(`$${simpleEscape(match.trim())}$`));
-
-  // 9. 处理其他常见命令
-  const cmdPattern = new RegExp(
-    `\\\\(frac|sqrt|text|mathbb|mathcal|mathbf|mathit|mathrm|textcolor|color)(?:\\[[^\\]]*\\])?(?:${BRACES})*`,
-    "g"
-  );
-  text = text.replace(cmdPattern, (match) => pushProtect(`$${simpleEscape(match)}$`));
-
-  // 10. 处理箭头和间距命令
-  text = text.replace(/\\(rightarrow|leftarrow|Rightarrow|Leftarrow|quad|qquad)\b/g, (match) => pushProtect(`$${simpleEscape(match)}$`));
-
-  // 还原
-  text = text.replace(/__PROTECTED_(\d+)__/g, (_, i) => protectedBlocks[parseInt(i)]);
-
-  return text;
-};
-
-// ==========================================
 // 3. 组件实现
 // ==========================================
 interface Props {
   content: string;
+  mathEngine?: "katex" | "mathjax";
 }
 
-const MathMarkdownViewer: React.FC<Props> = ({ content }) => {
-  const processedContent = preprocessLaTeX(content);
+const MathMarkdownViewer: React.FC<Props> = ({
+  content,
+  mathEngine = "katex",
+}) => {
+  const rehypePlugins: any[] = [
+    [
+      RehypeHighlight,
+      {
+        detect: false,
+        ignoreMissing: true,
+      },
+    ],
+  ];
+
+  if (mathEngine === "katex") {
+    rehypePlugins.push([
+					RehypeKatex,
+					{
+						strict: false,
+						trust: true,
+						macros: {
+							"\\cdotp": "‧", // 或者直接使用文本
+						},
+						errorColor: "#686868",
+					},
+				]);
+  } else if (mathEngine === "mathjax") {
+    rehypePlugins.push(rehypeMathjax);
+  }
+
+  const processedContent = processLatexBrackets(content)
 
   return (
-    <MathJaxContext config={mathJaxConfig} version={3}>
-      <MathJax key={processedContent.length}>
-        <ReactMarkdown
-          remarkPlugins={[
-            RemarkGfm, // TODO 会引起布局过大
-            RemarkBreaks,
-          ]}
-          rehypePlugins={[
-            [
-              RehypeHighlight,
-              {
-                detect: false,
-                ignoreMissing: true,
-              },
-            ],
-          ]}
-          components={{
-            pre: PreCode, // 增强代码块容器 // TODO 会引起循环渲染
-            code: CustomCode, // 支持折叠的代码内容
-            p: (pProps: any) => <p {...pProps} dir="auto" />, // 自动文本方向
-            a: (aProps: any) => {
-              const href = aProps.href || "";
-              // 音频链接自动转为 <audio> 元素
-              if (/\.(aac|mp3|opus|wav)$/.test(href)) {
-                return (
-                  <figure>
-                    <audio controls src={href}></audio>
-                  </figure>
-                );
-              }
-              // 视频链接自动转为 <video> 元素
-              if (/\.(3gp|3g2|webm|ogv|mpeg|mp4|avi)$/.test(href)) {
-                return (
-                  <video controls width="99.9%">
-                    <source src={href} />
-                  </video>
-                );
-              }
-              // 内部链接（以 /# 开头）在同一窗口打开，其余在新窗口打开
-              const isInternal = /^\/#/i.test(href);
-              const target = isInternal ? "_self" : aProps.target ?? "_blank";
-              return <a {...aProps} target={target} />;
-            },
-            img: (imgProps: any) => (
-              <img {...imgProps} style={{ maxWidth: "100%" }} loading="lazy" />
-            ),
-          }}
-        >
-          {processedContent}
-        </ReactMarkdown>
-      </MathJax>
-    </MathJaxContext>
+    <ReactMarkdown
+      remarkPlugins={[
+        [remarkMath, { singleDollarTextMath: true }],
+        remarkBareLatex,
+        RemarkGfm, 
+        RemarkBreaks,
+      ]}
+      rehypePlugins={rehypePlugins}
+      components={{
+        pre: PreCode, // 增强代码块容器 // TODO 会引起循环渲染
+        code: CustomCode, // 支持折叠的代码内容
+        p: (pProps: any) => <p {...pProps} dir="auto" />, // 自动文本方向
+        a: (aProps: any) => {
+          const href = aProps.href || "";
+          // 音频链接自动转为 <audio> 元素
+          if (/\.(aac|mp3|opus|wav)$/.test(href)) {
+            return (
+              <figure>
+                <audio controls src={href}></audio>
+              </figure>
+            );
+          }
+          // 视频链接自动转为 <video> 元素
+          if (/\.(3gp|3g2|webm|ogv|mpeg|mp4|avi)$/.test(href)) {
+            return (
+              <video controls width="99.9%">
+                <source src={href} />
+              </video>
+            );
+          }
+          // 内部链接（以 /# 开头）在同一窗口打开，其余在新窗口打开
+          const isInternal = /^\/#/i.test(href);
+          const target = isInternal ? "_self" : aProps.target ?? "_blank";
+          return <a {...aProps} target={target} />;
+        },
+        img: (imgProps: any) => (
+          <img {...imgProps} style={{ maxWidth: "100%" }} loading="lazy" />
+        ),
+      }}
+    >
+      {processedContent}
+    </ReactMarkdown>
   );
 };
 
@@ -490,6 +381,7 @@ export function ZJMarkdown(
     fontSize?: number; // 字体大小（默认 16px）
     fontFamily?: string; // 字体族
     style?: React.CSSProperties;
+    mathEngine?: "katex" | "mathjax";
   } & React.DOMAttributes<HTMLDivElement>
 ) {
   const mdRef = useRef<HTMLDivElement>(null);
@@ -506,7 +398,7 @@ export function ZJMarkdown(
       onDoubleClickCapture={props.onDoubleClickCapture}
       ref={mdRef}
     >
-      <MarkdownContent content={props.content} />
+      <MarkdownContent content={props.content} mathEngine={props.mathEngine} />
     </div>
   );
 }

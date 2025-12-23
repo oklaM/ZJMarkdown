@@ -626,3 +626,6 @@ Since \( h(y_{\text{max}}) \) is a constant, it follows that:
 Therefore, the maximum value of the spectral energy density per unit wavelength is proportional to the fifth power of the equilibrium temperature \( T \).
 
 \boxed{u_{\lambda,\text{max}} \propto T^{5}}
+
+
+\boxed{Cc1c(C(=O)C2CCCCC2)oc2ccc(N3CCSCC3)cc12}
