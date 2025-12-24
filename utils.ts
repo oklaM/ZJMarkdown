@@ -48,7 +48,7 @@ export const processLatexBrackets = (text: string) => {
     })
 
   // LaTeX 括号转换函数
-  const processMathAndProtect = (content: string, openDelim: string, closeDelim: string, wrapper: string): string => {
+  const processMathAndProtect = (content: string, openDelim: string, closeDelim: string, wrapper: string, eatTail = false): string => {
     let result = ''
     let remaining = content
 
@@ -64,15 +64,34 @@ export const processLatexBrackets = (text: string) => {
       const index = protectedItems.length
       protectedItems.push(`${wrapper}${match.body}${wrapper}`)
       result += `__CHERRY_STUDIO_PROTECTED_${index}__`
-      remaining = match.post
+
+      // 处理尾部吞噬逻辑
+      if (eatTail) {
+        // 查找 match.post 中第一个换行符的位置
+        const nextNewLine = match.post.indexOf('\n')
+        
+        if (nextNewLine === -1) {
+          // 如果后面没有换行符了，说明是文件末尾，把剩下的全吞掉
+          remaining = '' 
+        } else {
+          // 如果有换行符，跳过中间的所有字符，直接从换行符开始继续处理
+          // 这样 " km/h\n下一行" 中的 " km/h" 就被丢弃了
+          remaining = match.post.slice(nextNewLine)
+        }
+      } else {
+        // 不需要吞噬，正常衔接
+        remaining = match.post
+      }
     }
 
     return result
   }
 
   // 先处理块级公式，再处理内联公式
-  let result = processMathAndProtect(processedContent, '\\[', '\\]', '$$')
-  result = processMathAndProtect(result, '\\(', '\\)', '$')
+  let result = processMathAndProtect(processedContent, '$$', '$$', '$$', true)
+  result = processMathAndProtect(result, '\\[', '\\]', '$$', true)
+  result = processMathAndProtect(result, '\\(', '\\)', '$', false)
+  
 
   // result = processBareLatex(result)
 
