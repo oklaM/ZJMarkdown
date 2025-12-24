@@ -2,8 +2,8 @@
 
 > **包名**：`@zjlab-frontier/markdown`  
 > **适用框架**：React（支持 React 18+）  
-> **核心引擎**：`react-markdown` + `better-react-mathjax` (MathJax v3) + `mermaid`  
-> **功能亮点**：支持 **Mermaid 图表**、**LaTeX 数学公式（MathJax）**、**代码高亮**、**GitHub 风格 Markdown（GFM）**、**长代码折叠**、**一键复制**、**媒体自动识别** 等。
+> **核心引擎**：`react-markdown` + `KaTeX` / `MathJax` + `mermaid`  
+> **功能亮点**：支持 **Mermaid 图表**、**LaTeX 数学公式**（支持 KaTeX 和 MathJax 双引擎）、**代码高亮**、**GitHub 风格 Markdown（GFM）**、**长代码折叠**、**一键复制**、**媒体自动识别** 等。
 
 ---
 
@@ -23,6 +23,8 @@ npm install @zjlab-frontier/markdown
 
 ```tsx
 import { ZJMarkdown } from '@zjlab-frontier/markdown';
+// 引入样式（如果构建工具没有自动处理）
+// import '@zjlab-frontier/markdown/dist/style.css'; 
 ```
 
 ### 2. 基本使用
@@ -34,7 +36,7 @@ function App() {
 
 这是一个功能强大的 React Markdown 组件。
 
-- ✅ **数学公式**：$E = mc^2$ 或 \[ \sum_{i=1}^n i = \frac{n(n+1)}{2} \]
+- ✅ **数学公式**：$E = mc^2$
 - ✅ **Mermaid 图表**：流程图、时序图等
 - ✅ **代码增强**：自动识别语言、复制按钮、长代码折叠
 - ✅ **多媒体**：自动识别 mp3/mp4 链接
@@ -42,6 +44,7 @@ function App() {
 
   return (
     <div style={{ padding: 20 }}>
+      {/* 默认使用 KaTeX 渲染公式 */}
       <ZJMarkdown 
         content={markdownContent} 
         fontSize={16} 
@@ -55,23 +58,22 @@ function App() {
 
 ## 🧩 功能详解
 
-### 1. **数学公式（MathJax v3）**
+### 1. **数学公式（双引擎支持）**
 
-组件内置 `better-react-mathjax`，支持强大的 LaTeX 数学公式渲染。
+组件支持 `KaTeX`（默认，渲染快）和 `MathJax`（兼容性强）两种引擎。可以通过 `mathEngine` 属性切换。
 
 #### ✅ 支持语法：
 
-- **行内公式**：`$...$` 或 `\(...\)`
+- **行内公式**：`$...$` 或 `\(...\]`
 - **块级公式**：`$$...$$` 或 `\[...\]`
-- **环境支持**：支持 `align`, `gather`, `matrix`, `cases` 等常用环境。
+- **化学式支持**：支持 `\ce{...}` (KaTeX 需扩展，MathJax 原生支持更好)
 
 #### ⚙️ 预处理增强：
 
 组件内置了 **LaTeX 预处理逻辑**，解决了 Markdown 转义字符（如 `\` 和 `_`）与 LaTeX 语法冲突的问题。
 
 - 自动保护 `\\` 换行符
-- 自动处理 `\ce{...}` (化学式) 和 `\boxed{...}`
-- 兼容 `\begin{align}...\end{align}` 等环境写法
+- 自动处理 `\ce{...}` 和 `\boxed{...}` 等裸公式
 
 **示例：**
 
@@ -82,14 +84,15 @@ function App() {
 $$
 \int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi} 
 $$
+```
 
-矩阵：
-\[
-\begin{pmatrix}
- a & b \\
-c & d
-\end{pmatrix}
-\]
+#### 切换引擎示例：
+
+```tsx
+<ZJMarkdown 
+  content={content} 
+  mathEngine="mathjax" // 切换为 MathJax 引擎
+/>
 ```
 
 ---
@@ -117,8 +120,8 @@ graph TD
 
 - **语言标注**：显示语言类型（如 `typescript`）。
 - **一键复制**：提供复制按钮。
-- **自动折叠**：高度超过 **400px** 自动折叠。
-- **自动换行**：对文本类语言（`text`, `md`, `latex`）强制换行。
+- **自动折叠**：高度超过 **400px** 自动折叠，点击“查看全部”展开。
+- **自动换行**：对文本类语言（`text`, `md`, `latex` 等）强制换行，避免横向滚动。
 
 ---
 
@@ -146,6 +149,7 @@ graph TD
 | 属性名 | 类型 | 默认值 | 说明 |
 |:---|:---|:---|:---|
 | `content` | `string` | **必填** | Markdown 源码字符串 |
+| `mathEngine` | `'katex' , 'mathjax'` | `'katex'` | 数学公式渲染引擎 |
 | `fontSize` | `number` | `16` | 正文字体大小 (px) |
 | `fontFamily` | `string` | `'inherit'` | 字体设置 |
 | `style` | `CSSProperties` | - | 自定义根元素样式 |
