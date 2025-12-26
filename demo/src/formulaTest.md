@@ -713,3 +713,79 @@ This result is consistent regardless of the specific distance \(D\), as it cance
 \[
 \boxed{48}
 \] km/h
+
+To estimate the total mass of the central region of the globular cluster, we use the formula for circular motion in a gravitational field:
+
+\[ v^2 = \frac{G M}{r} \]
+
+where:
+- \( v = 100  \text{km/s} = 10^5  \text{m/s} \) (orbital speed),
+- \( r = 10  \text{pc} = 10 \times 3 \times 10^{13}  \text{km} = 3 \times 10^{14}  \text{m} \) (orbital radius),
+- \( G = 6.7 \times 10^{-11}  \text{N·m}^2/\text{kg}^2 \) (gravitational constant),
+- \( M \) is the mass of the central region (in kg).
+
+Solving for \( M \):
+
+\[ M = \frac{v^2 r}{G} \]
+
+Substitute the values:
+
+\[ v^2 = (10^5)^2 = 10^{10}  \text{m}^2/\text{s}^2 \]
+\[ r = 3 \times 10^{14}  \text{m} \]
+\[ v^2 r = (10^{10}) \times (3 \times 10^{14}) = 3 \times 10^{24}  \text{m}^3/\text{s}^2 \]
+\[ G = 6.7 \times 10^{-11}  \text{N·m}^2/\text{kg}^2 \]
+\[ M = \frac{3 \times 10^{24}}{6.7 \times 10^{-11}} = \frac{3}{6.7} \times 10^{24 + 11} = 0.447 \times 10^{35} = 4.47 \times 10^{34}  \text{kg} \]
+
+Convert to solar masses (\( M_\odot \approx 2 \times 10^{30}  \text{kg} \)):
+
+\[ M = \frac{4.47 \times 10^{34}}{2 \times 10^{30}} = \frac{4.47}{2} \times 10^{4} = 2.235 \times 10^{4} = 22350  M_\odot \]
+
+Thus, the total mass of the central region is approximately \( 22350  M_\odot \).
+
+\boxed{22350}
+
+$$ \boxed{Cc1nc(Br)cc(C(C)(C)C)n1.C#N>[Cu]>Cc1nc(C#N)cc(C(C)(C)C)n1} $$
+
+\boxed{K = h\nu \left(1-\dfrac{1}{1+\dfrac{h\nu}{m_e c^{2}}{1 - \cos \theta}}\right)}
+
+The redshift \( z = 0.1 \) is given, and the non-relativistic approximation is used for the recession velocity. For small \( z \), the recession velocity \( v \) is given by:
+
+\[
+v = z \cdot c
+\]
+
+where \( c \) is the speed of light. Using \( c = 3.00 \times 10^5 \) km/s:
+
+\[
+v = 0.1 \times 3.00 \times 10^5 = 3.00 \times 10^4 \text{ km/s}
+\]
+
+Thus, the recession velocity is \( 3.00 \times 10^4 \) km/s, or 30,000 km/s.
+
+For the distance, Hubble's Law is used:
+
+\[
+v = H_0 \cdot d
+\]
+
+where \( H_0 = 70 \) km/(s·Mpc) is the Hubble constant, and \( d \) is the distance in megaparsecs (Mpc). Solving for \( d \):
+
+\[
+d = \frac{v}{H_0} = \frac{3.00 \times 10^4}{70} = \frac{30000}{70} = 428.571 \text{ Mpc}
+\]
+
+Rounding to three significant figures (based on the given \( H_0 = 70 \) and \( z = 0.1 \)):
+
+\[
+d \approx 429 \text{ Mpc}
+\]
+
+The distance is 429 megaparsecs.
+
+**Final Answer:**
+
+- Recession velocity: \( 3.00 \times 10^4 \) km/s  
+- Distance: 429 Mpc
+
+\boxed{3.00 \times 10^{4}} \text{ km/s} \\
+\boxed{429} \text{ Mpc}
