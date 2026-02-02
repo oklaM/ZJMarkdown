@@ -16,6 +16,7 @@ import "katex/dist/contrib/copy-tex";
 import "katex/dist/contrib/mhchem";
 import "./markdown.scss";
 import "./highlight.scss";
+import { message } from "antd";
 
 // 统一初始化 Mermaid，避免重复初始化
 mermaid.initialize({
@@ -37,8 +38,10 @@ mermaid.initialize({
  */
 function copyToClipboard(text: string): void {
   try {
-    navigator.clipboard.writeText(text);
-  } catch (err) {
+    navigator.clipboard.writeText(text)
+    message.success("Copy successful");
+  }
+  catch (err) {
     console.error("[Markdown] 复制失败:", err);
   }
 }
@@ -188,9 +191,8 @@ export function PreCode(props: { children?: any }): any {
             <div
               style={{
                 padding: "10px",
-                backgroundColor: "#3f3f3f",
+                backgroundColor: "#96969626",
                 fontSize: "12px",
-                color: "#fff",
                 zIndex: 1,
               }}
             >
@@ -220,65 +222,23 @@ export function PreCode(props: { children?: any }): any {
 }
 
 /**
- * 自定义 <code> 组件，支持代码折叠（长代码块默认折叠）。
- * - 超过 400px 高度的代码块显示“查看全部”按钮
- * - 默认折叠状态，点击展开
+ * 自定义 <code> 组件，支持滚动（最大高度 600px）。
  */
 function CustomCode(props: { children?: any; className?: string }): any {
-  const enableCodeFold = true; // 可配置开关
-
   const ref = useRef<HTMLPreElement>(null);
-  const [collapsed, setCollapsed] = useState(true);
-  const [showToggle, setShowToggle] = useState(false);
-
-  // 根据内容高度决定是否显示折叠按钮
-  useEffect(() => {
-    if (ref.current) {
-      const codeHeight = ref.current.scrollHeight;
-      setShowToggle(codeHeight > 400);
-      // 滚动到底部（适用于日志类输出）
-      ref.current.scrollTop = ref.current.scrollHeight;
-    }
-  }, [props.children]);
-
-  const toggleCollapsed = () => {
-    setCollapsed((collapsed: any) => !collapsed);
-  };
-
-  const renderShowMoreButton = (): any => {
-    if (showToggle && enableCodeFold && collapsed) {
-      return (
-        <div
-          className={clsx("show-hide-button", {
-            collapsed,
-            expanded: !collapsed,
-          })}
-        >
-          <button type="button" onClick={toggleCollapsed}>
-            {"查看全部"}
-          </button>
-        </div>
-      );
-    }
-    return null;
-  };
 
   return (
-    <>
-      <code
-        className={clsx(props?.className)}
-        ref={ref}
-        style={{
-          maxHeight: enableCodeFold && collapsed ? "400px" : "none",
-          overflowY: "hidden",
-          width: "100%",
-        }}
-      >
-        {props.children}
-      </code>
-
-      {renderShowMoreButton()}
-    </>
+    <code
+      className={clsx(props?.className)}
+      ref={ref}
+      style={{
+        maxHeight: "600px",
+        overflowY: "auto",
+        width: "100%",
+      }}
+    >
+      {props.children}
+    </code>
   );
 }
 
