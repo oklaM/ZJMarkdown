@@ -9,6 +9,8 @@ import remarkMath from "remark-math";
 import RehypeKatex from "rehype-katex"
 import { remarkBareLatex } from './remark-bare-latex';
 import { processLatexBrackets } from "./utils"
+import { remarkDisableSetext } from './remark-disable-setext';
+
 // @ts-ignore rehype-mathjax is not typed
 import rehypeMathjax from "rehype-mathjax";
 import "katex/dist/katex.min.css";
@@ -17,6 +19,7 @@ import "katex/dist/contrib/mhchem";
 import "./markdown.scss";
 import "./highlight.scss";
 import { message } from "antd";
+
 
 // 统一初始化 Mermaid，避免重复初始化
 mermaid.initialize({
@@ -285,9 +288,10 @@ const MathMarkdownViewer: React.FC<Props> = ({
   return (
     <ReactMarkdown
       remarkPlugins={[
+        remarkDisableSetext, // 禁用 Setext 风格标题
         [remarkMath, { singleDollarTextMath: true }],
         remarkBareLatex,
-        RemarkGfm, 
+        RemarkGfm,
         RemarkBreaks,
       ]}
       rehypePlugins={rehypePlugins}
