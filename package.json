@@ -34,7 +34,6 @@
     }
   },
   "dependencies": {
-    "antd": "^6.2.2",
     "clsx": "^1.2.1",
     "katex": "^0.16.27",
     "mermaid": "^10.0.0",

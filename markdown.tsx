@@ -18,7 +18,6 @@ import "katex/dist/contrib/copy-tex";
 import "katex/dist/contrib/mhchem";
 import "./markdown.scss";
 import "./highlight.scss";
-import { message } from "antd";
 
 
 // 统一初始化 Mermaid，避免重复初始化
@@ -38,15 +37,23 @@ mermaid.initialize({
  * 将指定文本复制到剪贴板。
  * 使用现代 Clipboard API，若失败则记录错误（例如在非安全上下文中）。
  * @param text - 要复制的字符串内容。
+ * @param onSuccess - 复制成功时的回调函数。
+ * @param onError - 复制失败时的回调函数。
  */
-function copyToClipboard(text: string): void {
-  try {
-    navigator.clipboard.writeText(text)
-    message.success("Copy successful");
-  }
-  catch (err) {
-    console.error("[Markdown] 复制失败:", err);
-  }
+function copyToClipboard(
+  text: string,
+  onSuccess?: (text: string) => void,
+  onError?: (error: any) => void
+): void {
+  navigator.clipboard
+    .writeText(text)
+    .then(() => {
+      onSuccess?.(text);
+    })
+    .catch((err) => {
+      console.error("[Markdown] 复制失败:", err);
+      onError?.(err);
+    });
 }
 
 /**
@@ -143,6 +150,12 @@ export function Mermaid(props: { code: string }): any {
   );
 }
 
+interface PreCodeProps {
+  children?: any;
+  onCopySuccess?: (text: string) => void;
+  onCopyError?: (error: any) => void;
+}
+
 /**
  * 自定义 <pre> 包装组件，用于增强代码块功能：
  * - 自动识别语言类型并显示标签
@@ -150,7 +163,7 @@ export function Mermaid(props: { code: string }): any {
  * - 特殊处理 Mermaid 代码块：提取内容并渲染为图表
  * - 对纯文本类代码块启用自动换行
  */
-export function PreCode(props: { children?: any }): any {
+export function PreCode(props: PreCodeProps): any {
   const ref = useRef<HTMLPreElement>(null);
   const [language, setLanguage] = useState("");
   const [mermaidCode, setMermaidCode] = useState<string | null>(null);
@@ -207,11 +220,11 @@ export function PreCode(props: { children?: any }): any {
             className="copy-code-button"
             onClick={() => {
               if (ref.current) {
-                copyToClipboard(
+                const text =
                   ref.current.querySelector("code")?.innerText ||
-                    ref.current.innerText ||
-                    ""
-                );
+                  ref.current.innerText ||
+                  "";
+                copyToClipboard(text, props.onCopySuccess, props.onCopyError);
               }
             }}
           ></span>
@@ -251,11 +264,15 @@ function CustomCode(props: { children?: any; className?: string }): any {
 interface Props {
   content: string;
   mathEngine?: "katex" | "mathjax";
+  onCopySuccess?: (text: string) => void;
+  onCopyError?: (error: any) => void;
 }
 
 const MathMarkdownViewer: React.FC<Props> = ({
   content,
   mathEngine = "katex",
+  onCopySuccess,
+  onCopyError,
 }) => {
   const rehypePlugins: any[] = [
     [
@@ -296,7 +313,13 @@ const MathMarkdownViewer: React.FC<Props> = ({
       ]}
       rehypePlugins={rehypePlugins}
       components={{
-        pre: PreCode, // 增强代码块容器 // TODO 会引起循环渲染
+        pre: (preProps: any) => (
+          <PreCode
+            {...preProps}
+            onCopySuccess={onCopySuccess}
+            onCopyError={onCopyError}
+          />
+        ), // 增强代码块容器 // TODO 会引起循环渲染
         code: CustomCode, // 支持折叠的代码内容
         p: (pProps: any) => <p {...pProps} dir="auto" />, // 自动文本方向
         a: (aProps: any) => {
@@ -346,6 +369,8 @@ export function ZJMarkdown(
     fontFamily?: string; // 字体族
     style?: React.CSSProperties;
     mathEngine?: "katex" | "mathjax";
+    onCopySuccess?: (text: string) => void;
+    onCopyError?: (error: any) => void;
   } & React.DOMAttributes<HTMLDivElement>
 ) {
   const mdRef = useRef<HTMLDivElement>(null);
@@ -362,7 +387,12 @@ export function ZJMarkdown(
       onDoubleClickCapture={props.onDoubleClickCapture}
       ref={mdRef}
     >
-      <MarkdownContent content={props.content} mathEngine={props.mathEngine} />
+      <MarkdownContent
+        content={props.content}
+        mathEngine={props.mathEngine}
+        onCopySuccess={props.onCopySuccess}
+        onCopyError={props.onCopyError}
+      />
     </div>
   );
 }
