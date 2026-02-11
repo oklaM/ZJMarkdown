@@ -42,7 +42,7 @@ function App() {
       <div className="markdown-test-container">
         <h3>Markdown 测试</h3>
         <div className="markdown-test-content">
-          <ZJMarkdown content={markdownTestContent}  onCopySuccess={window.alert.bind(null, "复制成功")} onCopyError={console.error} />
+          <ZJMarkdown content={markdownTestContent} onCopy={(text) => console.log("复制:", text)} />
         </div>
       </div>
     </div>

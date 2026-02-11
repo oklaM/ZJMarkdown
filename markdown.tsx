@@ -33,28 +33,6 @@ mermaid.initialize({
   },
 });
 
-/**
- * 将指定文本复制到剪贴板。
- * 使用现代 Clipboard API，若失败则记录错误（例如在非安全上下文中）。
- * @param text - 要复制的字符串内容。
- * @param onSuccess - 复制成功时的回调函数。
- * @param onError - 复制失败时的回调函数。
- */
-function copyToClipboard(
-  text: string,
-  onSuccess?: (text: string) => void,
-  onError?: (error: any) => void
-): void {
-  navigator.clipboard
-    .writeText(text)
-    .then(() => {
-      onSuccess?.(text);
-    })
-    .catch((err) => {
-      console.error("[Markdown] 复制失败:", err);
-      onError?.(err);
-    });
-}
 
 /**
  * Mermaid 图表渲染组件。
@@ -152,8 +130,7 @@ export function Mermaid(props: { code: string }): any {
 
 interface PreCodeProps {
   children?: any;
-  onCopySuccess?: (text: string) => void;
-  onCopyError?: (error: any) => void;
+  onCopy?: (text: string) => void;
 }
 
 /**
@@ -224,7 +201,7 @@ export function PreCode(props: PreCodeProps): any {
                   ref.current.querySelector("code")?.innerText ||
                   ref.current.innerText ||
                   "";
-                copyToClipboard(text, props.onCopySuccess, props.onCopyError);
+                props.onCopy?.(text);
               }
             }}
           ></span>
@@ -264,15 +241,13 @@ function CustomCode(props: { children?: any; className?: string }): any {
 interface Props {
   content: string;
   mathEngine?: "katex" | "mathjax";
-  onCopySuccess?: (text: string) => void;
-  onCopyError?: (error: any) => void;
+  onCopy?: (text: string) => void;
 }
 
 const MathMarkdownViewer: React.FC<Props> = ({
   content,
   mathEngine = "katex",
-  onCopySuccess,
-  onCopyError,
+  onCopy,
 }) => {
   const rehypePlugins: any[] = [
     [
@@ -316,8 +291,7 @@ const MathMarkdownViewer: React.FC<Props> = ({
         pre: (preProps: any) => (
           <PreCode
             {...preProps}
-            onCopySuccess={onCopySuccess}
-            onCopyError={onCopyError}
+            onCopy={onCopy}
           />
         ), // 增强代码块容器 // TODO 会引起循环渲染
         code: CustomCode, // 支持折叠的代码内容
@@ -369,8 +343,7 @@ export function ZJMarkdown(
     fontFamily?: string; // 字体族
     style?: React.CSSProperties;
     mathEngine?: "katex" | "mathjax";
-    onCopySuccess?: (text: string) => void;
-    onCopyError?: (error: any) => void;
+    onCopy?: (text: string) => void;
   } & React.DOMAttributes<HTMLDivElement>
 ) {
   const mdRef = useRef<HTMLDivElement>(null);
@@ -390,8 +363,7 @@ export function ZJMarkdown(
       <MarkdownContent
         content={props.content}
         mathEngine={props.mathEngine}
-        onCopySuccess={props.onCopySuccess}
-        onCopyError={props.onCopyError}
+        onCopy={props.onCopy}
       />
     </div>
   );
