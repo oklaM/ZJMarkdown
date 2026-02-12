@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import mermaid from "mermaid";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import RemarkBreaks from "remark-breaks"; // 将单个换行符转换为 <br>
 import RemarkGfm from "remark-gfm"; // 支持 GitHub 风格 Markdown（表格、任务列表等）
@@ -43,47 +43,91 @@ export function Mermaid(props: { code: string }): any {
   const ref = useRef<HTMLDivElement>(null);
   const [hasError, setHasError] = useState(false);
   const lastCodeRef = useRef<string>("");
-  // 生成唯一ID，确保每个图表实例独立
-  const chartId = useMemo(
-    () => `mermaid-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-    []
-  );
 
   // 当 code 变化时，触发 mermaid 渲染
   useEffect(() => {
-    if (!props.code || !ref.current) return;
+    const renderMermaid = async () => {
+      if (!props.code || !ref.current) return;
 
-    // 避免重复渲染相同内容
-    if (props.code === lastCodeRef.current) return;
-    lastCodeRef.current = props.code;
+      // 避免重复渲染相同内容
+      if (props.code === lastCodeRef.current) return;
+      lastCodeRef.current = props.code;
 
-    try {
-      // 重置错误状态
-      setHasError(false);
+      // 每次渲染时生成新的唯一 ID
+      const chartId = `mermaid-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 
-      // 每次运行前彻底清空容器
-      ref.current.innerHTML = "";
+      // 清理可能的隐藏字符和零宽字符
+      let cleanCode = props.code.trim();
+      // 移除可能的零宽字符
+      cleanCode = cleanCode.replace(/[\u200B-\u200D\uFEFF]/g, '');
+      // 移除可能的 HTML 实体编码
+      cleanCode = cleanCode.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
 
-      // 使用mermaid.render()方法独立渲染每个图表
-      // 只传递必需的参数：id和代码
-      mermaid
-        .render(chartId, props.code.trim())
-        .then(({ svg }) => {
-          // 确保组件仍然挂载
-          if (ref.current) {
-            // 将生成的SVG代码插入到容器中
-            ref.current.innerHTML = svg;
-          }
-        })
-        .catch((error: any) => {
+      // 检查代码是否可能还在流式输入中（不完整）
+      const lines = cleanCode.split('\n').filter(line => line.trim());
+      const hasBasicElements = cleanCode.includes('-->') || cleanCode.includes(':::');
+
+      // 检查方括号是否成对（检测节点定义是否完整）
+      const openBrackets = (cleanCode.match(/\[/g) || []).length;
+      const closeBrackets = (cleanCode.match(/\]/g) || []).length;
+      const hasUnmatchedBrackets = openBrackets !== closeBrackets;
+
+      // 更严格的检测条件：
+      // 1. 代码太短（< 30 字符）
+      // 2. 或者虽然有内容但没有基本元素（箭头或节点定义）
+      // 3. 或者方括号不匹配（正在输入中文字，如 A[开始...
+      const isLikelyIncomplete = cleanCode.length < 30 ||
+        (lines.length > 0 && !hasBasicElements) ||
+        hasUnmatchedBrackets;
+
+      if (isLikelyIncomplete) {
+        // 代码可能不完整，显示加载提示但不设置错误状态
+        if (ref.current) {
+          ref.current.innerHTML = '<div style="color:#999;font-size:12px;text-align:center;padding:20px;">Mermaid code is incomplete...</div>';
+        }
+        setHasError(false);
+        return;
+      }
+
+      try {
+        // 重置错误状态（在开始渲染前）
+        setHasError(false);
+
+        // 每次运行前彻底清空容器
+        ref.current.innerHTML = "";
+
+        // 先使用 parse 检查语法，避免 Mermaid 自动插入错误 SVG 到 body
+        try {
+          await mermaid.parse(cleanCode);
+        } catch (parseError: any) {
+          // 语法检查失败，不调用 render()，避免生成错误 SVG
           setHasError(true);
-          console.error("[Markdown] Mermaid 渲染失败:", error.message);
-        });
-    } catch (e: any) {
-      setHasError(true);
-      console.error("[Markdown] Mermaid 渲染失败:", e.message);
-    }
-  }, [props.code, chartId]);
+          console.error("[Markdown] Mermaid 语法检查失败:", parseError);
+          if (ref.current) {
+            ref.current.innerHTML = `
+              <div style="color:#c33;font-size:14px;text-align:center;padding:20px;">
+                error in mermaid code<br>
+              </div>
+            `;
+          }
+          return;
+        }
+
+        // 语法正确，使用 render() 方法渲染图表
+        const { svg } = await mermaid.render(chartId, cleanCode);
+
+        // 确保组件仍然挂载
+        if (ref.current) {
+          ref.current.innerHTML = svg;
+        }
+      } catch (e: any) {
+        setHasError(true);
+        console.error("[Markdown] Mermaid 渲染异常:", e);
+      }
+    };
+
+    renderMermaid();
+  }, [props.code]);
 
   /**
    * （预留功能）点击图表时在新窗口中查看 SVG。
@@ -121,7 +165,7 @@ export function Mermaid(props: { code: string }): any {
             fontSize: "14px",
           }}
         >
-          Mermaid 图表渲染失败，请检查代码语法
+          error in mermaid code
         </div>
       ) : null}
     </div>
@@ -180,18 +224,16 @@ export function PreCode(props: PreCodeProps): any {
       <div style={{ position: "relative" }}>
         <pre ref={ref}>
           {/* 显示代码语言标签 */}
-          {language && (
-            <div
-              style={{
-                padding: "10px",
-                backgroundColor: "#96969626",
-                fontSize: "12px",
-                zIndex: 1,
-              }}
-            >
-              {language}
-            </div>
-          )}
+          <div
+            style={{
+              padding: "10px",
+              backgroundColor: "#96969626",
+              fontSize: "12px",
+              zIndex: 1,
+            }}
+          >
+            {language}
+          </div>
           {/* 复制按钮 */}
           <span
             className="copy-code-button"
@@ -209,7 +251,7 @@ export function PreCode(props: PreCodeProps): any {
         </pre>
       </div>
       {/* 若检测到 Mermaid 代码，则渲染图表 */}
-      {mermaidCode && <Mermaid code={mermaidCode} />}
+      {/* {mermaidCode && <Mermaid code={mermaidCode} />} */}
     </>
   );
 }
