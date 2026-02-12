@@ -6,6 +6,7 @@ import { markdownTestContent } from './markdownTestContent';
 
 function App() {
   const [markdown, setMarkdown] = useState('');
+  const [mermaidCode, setMermaidCode] = useState('');
 
   useEffect(() => {
     // 动态导入公式测试 Markdown 文件，使用 ?raw 后缀获取原始内容
@@ -16,6 +17,14 @@ function App() {
       .catch((error) => {
         console.error('Failed to load markdown file:', error);
         setMarkdown('# 加载失败\n\n无法加载 Markdown 文件，请检查文件路径是否正确。');
+      });
+    import('./mermaidTest.md?raw')
+      .then((module) => {
+        setMermaidCode(module.default);
+      })
+      .catch((error) => {
+        console.error('Failed to load mermaid file:', error);
+        setMermaidCode('# 加载失败\n\n无法加载 Mermaid 文件，请检查文件路径是否正确。');
       });
   }, []);
 
@@ -43,6 +52,12 @@ function App() {
         <h3>Markdown 测试</h3>
         <div className="markdown-test-content">
           <ZJMarkdown content={markdownTestContent} onCopy={(text) => console.log("复制:", text)} />
+        </div>
+      </div>
+      <div className="mermaid-test-container">
+        <h3>Mermaid 测试</h3>
+        <div className="mermaid-test-content">
+          <ZJMarkdown content={mermaidCode} onCopy={(text) => console.log("复制:", text)} />
         </div>
       </div>
     </div>
