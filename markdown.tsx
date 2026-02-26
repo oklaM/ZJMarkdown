@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import mermaid from "mermaid";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import RemarkBreaks from "remark-breaks"; // 将单个换行符转换为 <br>
 import RemarkGfm from "remark-gfm"; // 支持 GitHub 风格 Markdown（表格、任务列表等）
@@ -186,17 +186,23 @@ interface PreCodeProps {
  */
 export function PreCode(props: PreCodeProps): any {
   const ref = useRef<HTMLPreElement>(null);
-  const [language, setLanguage] = useState("");
   const [mermaidCode, setMermaidCode] = useState<string | null>(null);
+
+  // 直接从 props.children 提取语言，避免 DOM 查询导致的闪动
+  const language = useMemo(() => {
+    // 尝试从 children 的 className 中提取语言
+    if (props.children?.props?.className) {
+      const match = props.children.props.className.match(/language-(\w+)/);
+      if (match) return match[1];
+    }
+    // 如果没有找到，默认为 "text"（但不更新状态，避免闪动）
+    return "text";
+  }, [props.children]);
 
   useEffect(() => {
     if (!ref.current) return;
     const codeDom = ref.current.querySelector("code");
     if (!codeDom) return;
-
-    const match = codeDom.className.match(/language-(\w+)/);
-    const detectedLang = match ? match[1] : "text";
-    setLanguage(detectedLang);
 
     // 组件挂载后，对特定语言的代码块启用自动换行（避免横向滚动）
     const wrapLanguages = [
@@ -209,15 +215,15 @@ export function PreCode(props: PreCodeProps): any {
       "tex",
       "latex",
     ];
-    if (wrapLanguages.includes(detectedLang)) {
+    if (wrapLanguages.includes(language)) {
       codeDom.style.whiteSpace = "pre-wrap";
     }
 
-    if (detectedLang === "mermaid") {
+    if (language === "mermaid") {
       const newCode = codeDom.innerText.trim();
       setMermaidCode((prev) => (prev === newCode ? prev : newCode)); // 仅在变化时更新
     }
-  }, [props.children]); // 添加依赖项，确保代码变化时重新检测
+  }, [props.children, language]); // 添加依赖项，确保代码变化时重新检测
 
   return (
     <>
@@ -226,10 +232,10 @@ export function PreCode(props: PreCodeProps): any {
           {/* 显示代码语言标签 */}
           <div
             style={{
+              height: "38px",
               padding: "10px",
               backgroundColor: "#96969626",
               fontSize: "12px",
-              zIndex: 1,
             }}
           >
             {language}
@@ -267,8 +273,6 @@ function CustomCode(props: { children?: any; className?: string }): any {
       className={clsx(props?.className)}
       ref={ref}
       style={{
-        maxHeight: "600px",
-        overflowY: "auto",
         width: "100%",
       }}
     >
