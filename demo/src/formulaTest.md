@@ -852,3 +852,41 @@ C | X |
 | 速度 | 光速<br>真空中约为 \(3 \times 10^8\) m/s | \(c\) |
 | 能量 | 质能方程<br>爱因斯坦提出 | \(E = mc^2\) |
 | 结论 | 这是一段<br>很长的描述 | \(\boxed{OK}\) |
+
+To estimate the total mass of the central region of the globular cluster, we can equate the gravitational force to the centripetal force required to keep the star in a circular orbit.
+
+### 1. The Formula
+For a star of mass $m$ orbiting a central mass $M$ at a distance $r$ with speed $v$, the gravitational force equals the centripetal force:
+$$ \frac{G M m}{r^2} = \frac{m v^2}{r} $$
+
+Rearranging this to solve for the central mass $M$:
+$$ M = \frac{v^2 r}{G} $$
+
+### 2. Convert Given Values to SI Units (meters, kilograms, seconds)
+*   **Orbital speed ($v$):** 
+    $$ 100 \, \text{km/s} = 100 \times 10^3 \, \text{m/s} = 10^5 \, \text{m/s} $$
+*   **Orbital radius ($r$):** 
+    $$ 
+    10 \, \text{pc} = 10 \times (3 \times 10^{13} \, \text{km}) = 3 \times 10^{14} \, \text{km} 
+    $$
+    Convert km to meters: 
+    $$ 
+    3 \times 10^{14} \, \text{km} = 3 \times 10^{17} \, \text{m} 
+    $$
+*   **Gravitational constant ($G$):** 
+    $$ 6.7 \times 10^{-11} \, \text{N}\cdot\text{m}^2/\text{kg}^2 $$
+
+### 3. Calculate the Mass in Kilograms
+Substitute the SI values into the derived formula:
+$$ M = \frac{(10^5)^2 \times (3 \times 10^{17})}{6.7 \times 10^{-11}} $$
+$$ M = \frac{10^{10} \times 3 \times 10^{17}}{6.7 \times 10^{-11}} $$
+$$ M = \frac{3 \times 10^{27}}{6.7 \times 10^{-11}} $$
+$$ M \approx 4.4776 \times 10^{37} \, \text{kg} $$
+
+### 4. Convert the Mass to Solar Masses ($M_\odot$)
+Divide the total mass in kilograms by the mass of the Sun ($M_\odot \approx 2 \times 10^{30} \, \text{kg}$):
+$$ M_{\text{total}} = \frac{4.4776 \times 10^{37} \, \text{kg}}{2 \times 10^{30} \, \text{kg}/M_\odot} $$
+$$ M_{\text{total}} \approx 2.2388 \times 10^7 \, M_\odot $$
+
+**Final Answer:**
+The estimated total mass of the central region of the cluster is approximately **$2.24 \times 10^7 \, M_\odot$**.

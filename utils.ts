@@ -1,7 +1,5 @@
-
-
-// 检查是否包含潜在的 LaTeX 模式
-const containsLatexRegex = /\\\(.*?\\\)|\\\[.*?\\\]/s
+// 检查是否包含潜在的 LaTeX 模式（包括 \[...\], \(...\), 和 $$...$$）
+const containsLatexRegex = /\\\(.*?\\\)|\\\[.*?\\\]|\$\$[\s\S]*?\$\$/s
 
 /**
  * 转换 LaTeX 公式括号 `\[\]` 和 `\(\)` 为 Markdown 格式 `$$...$$` 和 `$...$`
@@ -29,26 +27,32 @@ export const processLatexBrackets = (text: string) => {
 
   processedContent = processedContent
     // 保护代码块（多行代码块）
-    .replace(/(`{3,})([\s\S]*?)\1`*/g, (match) => {
+    .replace(/(`{3,})([\s\S]*?)\1`*/g, match => {
       const index = protectedItems.length
       protectedItems.push(match)
       return `__CHERRY_STUDIO_PROTECTED_${index}__`
     })
     // 保护代码块（行内代码）
-    .replace(/(`{1,2})([^\r\n]*?)\1(?!`)/g, (match) => {
+    .replace(/(`{1,2})([^\r\n]*?)\1(?!`)/g, match => {
       const index = protectedItems.length
       protectedItems.push(match)
       return `__CHERRY_STUDIO_PROTECTED_${index}__`
     })
     // 保护链接 [text](url)
-    .replace(/\[([^[\]]*(?:\[[^\]]*\][^[\]]*)*)\]\([^)]*?\)/g, (match) => {
+    .replace(/\[([^[\]]*(?:\[[^\]]*\][^[\]]*)*)\]\([^)]*?\)/g, match => {
       const index = protectedItems.length
       protectedItems.push(match)
       return `__CHERRY_STUDIO_PROTECTED_${index}__`
     })
 
   // LaTeX 括号转换函数
-  const processMathAndProtect = (content: string, openDelim: string, closeDelim: string, wrapper: string, eatTail = false): string => {
+  const processMathAndProtect = (
+    content: string,
+    openDelim: string,
+    closeDelim: string,
+    wrapper: string,
+    eatTail = false
+  ): string => {
     let result = ''
     let remaining = content
 
@@ -60,19 +64,45 @@ export const processLatexBrackets = (text: string) => {
       }
 
       result += match.pre
+
+      // 提取 openDelim 之前的缩进（最后一个换行符后的空白字符）
+      const extractIndent = (pre: string): string => {
+        const lastNewLine = pre.lastIndexOf('\n')
+        if (lastNewLine === -1) {
+          // 如果没有换行符，说明在行首，没有缩进
+          return ''
+        }
+        // 获取最后一个换行符之后到 openDelim 之前的内容
+        const afterNewLine = pre.slice(lastNewLine + 1)
+        // 提取所有空白字符（空格和制表符）
+        const indentMatch = afterNewLine.match(/^[\s\t]*/)
+        return indentMatch ? indentMatch[0] : ''
+      }
+
+      const indent = extractIndent(match.pre)
+
+      // 动态构建带缩进的 wrapper
+      // 例如：如果 wrapper 是 '\n$$\n'，indent 是 '    '
+      // 则转换为 '\n    $$\n    '（两个 \n 都添加缩进）
+      let actualWrapper = wrapper
+      if (indent) {
+        // 替换所有 \n 为 \n${indent}，保持开始和结束标记的缩进一致
+        actualWrapper = wrapper.replace(/\n/g, `\n${indent}`)
+      }
+
       // 保护匹配内容
       const index = protectedItems.length
-      protectedItems.push(`${wrapper}${match.body}${wrapper}`)
+      protectedItems.push(`${actualWrapper}${match.body}${actualWrapper}`)
       result += `__CHERRY_STUDIO_PROTECTED_${index}__`
 
       // 处理尾部吞噬逻辑
       if (eatTail) {
         // 查找 match.post 中第一个换行符的位置
         const nextNewLine = match.post.indexOf('\n')
-        
+
         if (nextNewLine === -1) {
           // 如果后面没有换行符了，说明是文件末尾，把剩下的全吞掉
-          remaining = '' 
+          remaining = ''
         } else {
           // 如果有换行符，跳过中间的所有字符，直接从换行符开始继续处理
           // 这样 " km/h\n下一行" 中的 " km/h" 就被丢弃了
@@ -88,10 +118,9 @@ export const processLatexBrackets = (text: string) => {
   }
 
   // 先处理块级公式，再处理内联公式
-  let result = processMathAndProtect(processedContent, '$$', '$$', '$$', true)
-  result = processMathAndProtect(result, '\\[', '\\]', '$$', true)
+  let result = processMathAndProtect(processedContent, '$$', '$$', '\n$$\n', true)
+  result = processMathAndProtect(result, '\\[', '\\]', '\n$$\n', true)
   result = processMathAndProtect(result, '\\(', '\\)', '$', false)
-  
 
   // result = processBareLatex(result)
 
@@ -108,7 +137,6 @@ export const processLatexBrackets = (text: string) => {
 
   return result
 }
-
 
 /**
  * 查找 LaTeX 数学公式的匹配括号对
@@ -128,7 +156,32 @@ const findLatexMatch = (text: string, openDelim: string, closeDelim: string) => 
     return count & 1
   }
 
-  // 查找第一个有效的开始标记
+  // 特殊情况：当开始和结束分隔符相同时（如 $$），使用简单匹配
+  if (openDelim === closeDelim) {
+    for (let i = 0, n = text.length; i <= n - openDelim.length * 2; i++) {
+      // 查找第一个未转义的开始标记
+      if (!text.startsWith(openDelim, i) || escaped(i)) continue
+
+      // 从开始标记后查找结束标记
+      const startEnd = i + openDelim.length
+      for (let j = startEnd; j <= n - openDelim.length; j++) {
+        // 查找第一个未转义的结束标记
+        if (!text.startsWith(openDelim, j) || escaped(j)) continue
+
+        // 找到匹配！
+        return {
+          start: i,
+          end: j + openDelim.length,
+          pre: text.slice(0, i),
+          body: text.slice(startEnd, j),
+          post: text.slice(j + openDelim.length),
+        }
+      }
+    }
+    return null
+  }
+
+  // 原有逻辑：处理不同分隔符的情况（如 \[...\]）
   for (let i = 0, n = text.length; i <= n - openDelim.length; i++) {
     // 没有找到开始分隔符或被转义，跳过
     if (!text.startsWith(openDelim, i) || escaped(i)) continue
@@ -137,7 +190,11 @@ const findLatexMatch = (text: string, openDelim: string, closeDelim: string) => 
     for (let j = i + openDelim.length, depth = 1; j <= n - closeDelim.length && depth; j++) {
       // 计算当前位置对深度的影响：+1(开始), -1(结束), 0(无关)
       const delta =
-        text.startsWith(openDelim, j) && !escaped(j) ? 1 : text.startsWith(closeDelim, j) && !escaped(j) ? -1 : 0
+        text.startsWith(openDelim, j) && !escaped(j)
+          ? 1
+          : text.startsWith(closeDelim, j) && !escaped(j)
+            ? -1
+            : 0
 
       if (delta) {
         depth += delta
@@ -149,7 +206,7 @@ const findLatexMatch = (text: string, openDelim: string, closeDelim: string) => 
             end: j + closeDelim.length,
             pre: text.slice(0, i),
             body: text.slice(i + openDelim.length, j),
-            post: text.slice(j + closeDelim.length)
+            post: text.slice(j + closeDelim.length),
           }
 
         // 跳过已处理的分隔符字符，避免重复检查
@@ -169,24 +226,24 @@ const findLatexMatch = (text: string, openDelim: string, closeDelim: string) => 
  * @returns 处理了裸命令的字符串
  */
 export const processBareLatex = (text: string) => {
-  const protectedBlocks: string[] = [];
+  const protectedBlocks: string[] = []
 
   // 保护机制：将不需要处理的内容（代码块、已经包裹好的公式）暂时移出
   const pushProtect = (content: string) => {
-    const id = `__PROTECTED_${protectedBlocks.length}__`;
-    protectedBlocks.push(content);
-    return id;
-  };
+    const id = `__PROTECTED_${protectedBlocks.length}__`
+    protectedBlocks.push(content)
+    return id
+  }
 
   // 1. 保护代码块 (保持不变，防止代码里的 LaTeX 被误伤)
-//   text = text.replace(/(`+)([\s\S]*?)\1`*/g, (match) => pushProtect(match));
+  //   text = text.replace(/(`+)([\s\S]*?)\1`*/g, (match) => pushProtect(match));
 
   // 2. 保护已经存在的 $$ Block
   // KaTeX 对于换行比较敏感，align 环境里需要保留换行，不要随意替换成空格
-  text = text.replace(/\$\$([\s\S]*?)\$\$/g, (match) => pushProtect(match));
+  text = text.replace(/\$\$([\s\S]*?)\$\$/g, match => pushProtect(match))
 
   // 3. 保护已经存在的 $ Inline
-  text = text.replace(/\$([^$\n]+?)\$/g, (match) => pushProtect(match));
+  text = text.replace(/\$([^$\n]+?)\$/g, match => pushProtect(match))
 
   // =========================================================
   // 处理裸露的 LaTeX (Bare LaTeX) 适配 KaTeX
@@ -196,57 +253,60 @@ export const processBareLatex = (text: string) => {
   // 注意：KaTeX 不需要把 \frac 转义成 \\frac，所以这里去掉了对 \ 的转义
   // 只需要处理可能导致 Markdown 解析错误的特殊字符（视具体 Markdown 渲染器而定，通常保持原样即可）
   const wrapInline = (content: string) => {
-    return pushProtect(`$${content}$`);
-  };
+    return pushProtect(`$${content}$`)
+  }
 
   const wrapBlock = (content: string) => {
-    return pushProtect(`$$\n${content}\n$$`);
-  };
+    return pushProtect(`$$\n${content}\n$$`)
+  }
 
   // 4. 处理 Environment (如 align, gather 等)
   // KaTeX 要求这些环境必须在 displayMode ($$) 下，或者使用 aligned 等行内变体
   // 这里我们将裸写的 environment 强制包裹在 $$ 中
-  const envPattern = /\\begin\{(align|gather|matrix|cases|split|aligned|equation|flalign)\}([\s\S]*?)\\end\{\1\}/g;
-  text = text.replace(envPattern, (match) => {
-    return wrapBlock(match); 
-  });
+  const envPattern =
+    /\\begin\{(align|gather|matrix|cases|split|aligned|equation|flalign)\}([\s\S]*?)\\end\{\1\}/g
+  text = text.replace(envPattern, match => {
+    return wrapBlock(match)
+  })
 
   // 5. 处理 LaTeX inline 命令和符号
   // 定义水平空白字符（空格和制表符）
-  const H_SPACE = "[ \\t]"; 
+  const H_SPACE = '[ \\t]'
   // 支持递归嵌套的大括号正则
-  const BRACES = `\\{(?:[^{}]|\\{(?:[^{}]|\\{[^{}]*\\})*\\})*\\}`;
+  const BRACES = `\\{(?:[^{}]|\\{(?:[^{}]|\\{[^{}]*\\})*\\})*\\}`
 
   // 定义那些【必须】带参数才有数学意义的命令
   // 如果只写 \ce 或 \frac 而不带括号，通常只是在文本中提到它们，不应渲染
-  const cmdsRequiringArgs = "frac|sqrt|text|mathbb|mathcal|mathbf|mathit|mathrm|textcolor|color|ce|boxed";
-  
+  const cmdsRequiringArgs =
+    'frac|sqrt|text|mathbb|mathcal|mathbf|mathit|mathrm|textcolor|color|ce|boxed'
+
   // 关键修改：将末尾的 * (零或多) 改为 + (一或多)
   // 含义：匹配 \cmd，后面可能有可选参数 [], 然后【必须】紧跟至少一组花括号 {}
-  const cmdAtomWithArgs = `\\\\(?:${cmdsRequiringArgs})(?:\\[[^\\]]*\\])?(?:${BRACES})+`;
+  const cmdAtomWithArgs = `\\\\(?:${cmdsRequiringArgs})(?:\\[[^\\]]*\\])?(?:${BRACES})+`
 
   // 运算符 (sum, prod 等) 可以不带花括号单独存在 (比如后面跟空格)
   // 结尾继续使用 H_SPACE*，允许 \sum 后面跟空格
-  const opAtom = `\\\\(?:sum|prod|int|lim)(?:_\\{[^}]*\\}|\\^\\{[^}]*\\}|_[a-zA-Z0-9]|\\^[a-zA-Z0-9]|${H_SPACE})*`;
+  const opAtom = `\\\\(?:sum|prod|int|lim)(?:_\\{[^}]*\\}|\\^\\{[^}]*\\}|_[a-zA-Z0-9]|\\^[a-zA-Z0-9]|${H_SPACE})*`
 
   // 符号和希腊字母 (alpha, beta 等) 本身就是独立的，不需要参数
-  const symbols = "alpha|beta|gamma|delta|theta|lambda|pi|sigma|omega|Delta|Theta|Lambda|Pi|Sigma|Omega|infty|approx|neq|leq|geq|times|div|pm|cdot|rightarrow|leftarrow|Rightarrow|Leftarrow|quad|qquad";
-  const symbolAtom = `\\\\(?:${symbols})\\b`;
+  const symbols =
+    'alpha|beta|gamma|delta|theta|lambda|pi|sigma|omega|Delta|Theta|Lambda|Pi|Sigma|Omega|infty|approx|neq|leq|geq|times|div|pm|cdot|rightarrow|leftarrow|Rightarrow|Leftarrow|quad|qquad'
+  const symbolAtom = `\\\\(?:${symbols})\\b`
 
   // 组合所有可能的原子类型
-  const latexAtom = `(?:${cmdAtomWithArgs}|${opAtom}|${symbolAtom})`;
+  const latexAtom = `(?:${cmdAtomWithArgs}|${opAtom}|${symbolAtom})`
 
   // 链式匹配正则 (保持不变，使用水平空白防止吃换行)
-  const latexChainRegex = new RegExp(`(${latexAtom})(${H_SPACE}*${latexAtom})*`, "g");
+  const latexChainRegex = new RegExp(`(${latexAtom})(${H_SPACE}*${latexAtom})*`, 'g')
 
-  text = text.replace(latexChainRegex, (match) => {
-    return wrapInline(match.trim());
-  });
+  text = text.replace(latexChainRegex, match => {
+    return wrapInline(match.trim())
+  })
 
   // =========================================================
   // 还原
   // =========================================================
-  text = text.replace(/__PROTECTED_(\d+)__/g, (_, i) => protectedBlocks[parseInt(i)]);
+  text = text.replace(/__PROTECTED_(\d+)__/g, (_, i) => protectedBlocks[parseInt(i)])
 
-  return text;
-};
+  return text
+}
